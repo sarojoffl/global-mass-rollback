@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Global Mass Rollback</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      background: #f8f9fa;
+    }
+    .login-card {
+      max-width: 400px;
+      margin: 80px auto;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+      background: #ffffff;
+    }
+    .btn-gradient {
+      background: linear-gradient(90deg, #0d6efd, #6610f2);
+      color: #fff;
+      border: none;
+    }
+    .btn-gradient:hover {
+      background: linear-gradient(90deg, #6610f2, #0d6efd);
+      color: #fff;
+    }
+    .navbar-brand {
+      font-weight: bold;
+      font-size: 1.4rem;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ================== Navbar ================== -->
+<nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="#">Global Mass Rollback</a>
+    {% if logged_in %}
+      <div class="d-flex align-items-center">
+        <span class="me-3 text-muted">Logged in as <strong>{{ username }}</strong></span>
+        <a href="/logout" class="btn btn-outline-secondary btn-sm">Logout</a>
+      </div>
+    {% endif %}
+  </div>
+</nav>
+
+<!-- ================== Main Content ================== -->
+<div class="container py-5">
+  {% if not logged_in %}
+    <div class="login-card text-center">
+      <h3 class="mb-3">Welcome!</h3>
+      <p class="text-muted mb-4">Authenticate with Wikimedia OAuth to use the tool.</p>
+      <a href="/login" class="btn btn-gradient btn-lg w-100">Login with Wikimedia</a>
+    </div>
+  {% else %}
+    <div class="card mb-4 shadow-sm">
+      <div class="card-body">
+        <div class="input-group">
+          <input id="username" type="text" class="form-control" placeholder="Enter username">
+          <button class="btn btn-primary" onclick="loadGlobalContribs()">Search</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="spinner" class="text-center my-4 d-none">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+    </div>
+
+    <div id="noEdits" class="alert alert-warning text-center d-none" role="alert">
+      No edits found for this user.
+    </div>
+
+    <div id="contribCard" class="card shadow-sm d-none">
+      <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+        <span>Latest Edits</span>
+        <button id="rollbackAllBtn" class="btn btn-sm btn-danger" onclick="rollbackAll()">Rollback All</button>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-striped table-hover mb-0">
+            <thead class="table-dark">
+              <tr>
+                <th>Date</th>
+                <th>Project</th>
+                <th>Page title</th>
+                <th>Edit summary</th>
+                <th>Size</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="contribList"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+</div>
+
+<script>
+(() => {
+  const specialWikis = {
+    'commonswiki': 'commons.wikimedia.org',
+    'incubatorwiki': 'incubator.wikimedia.org',
+    'mediawikiwiki': 'www.mediawiki.org',
+    'metawiki': 'meta.wikimedia.org',
+    'specieswiki': 'species.wikimedia.org',
+    'wikidatawiki': 'www.wikidata.org',
+    'wikifunctionswiki': 'www.wikifunctions.org',
+    'wikimaniawiki': 'wikimania.wikimedia.org'
+  };
+  const mainProjects = ['wiktionary', 'wikibooks', 'wikinews', 'wikiquote', 'wikisource', 'wikiversity', 'wikivoyage'];
+  let currentEdits = [];
+
+  function getWikiDomain(wiki) {
+    if (specialWikis[wiki]) return specialWikis[wiki];
+    for (let proj of mainProjects) {
+      if (wiki.endsWith(proj)) {
+        const lang = wiki.slice(0, -proj.length);
+        return `${lang}.${proj}.org`;
+      }
+    }
+    let lang = wiki.slice(0, -4).replace(/_/g, '-');
+    return `${lang}.wikipedia.org`;
+  }
+
+  function getDiffUrl(wiki, revid) {
+    return `https://${getWikiDomain(wiki)}/w/index.php?diff=${revid}`;
+  }
+
+  function getHistUrl(wiki, title) {
+    return `https://${getWikiDomain(wiki)}/w/index.php?title=${encodeURIComponent(title)}&action=history`;
+  }
+
+  window.loadGlobalContribs = async function() {
+    const username = document.getElementById("username").value.trim();
+    if (!username) return alert("Please enter a username.");
+
+    const tbody = document.getElementById("contribList");
+    const card = document.getElementById("contribCard");
+    const spinner = document.getElementById("spinner");
+    const noEdits = document.getElementById("noEdits");
+    const rollbackAllBtn = document.getElementById("rollbackAllBtn");
+
+    spinner.classList.remove("d-none");
+    card.classList.add("d-none");
+    noEdits.classList.add("d-none");
+    tbody.innerHTML = "";
+    rollbackAllBtn.disabled = false;
+    rollbackAllBtn.innerText = "Rollback All";
+
+    try {
+      const response = await fetch("/get_global_contribs", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: "username=" + encodeURIComponent(username)
+      });
+
+      const data = await response.json();
+      spinner.classList.add("d-none");
+
+      if (!data || data.length === 0) {
+        noEdits.classList.remove("d-none");
+        currentEdits = [];
+        return;
+      }
+
+      currentEdits = data;
+      card.classList.remove("d-none");
+
+      data.forEach(edit => {
+        const tr = document.createElement("tr");
+        tr.id = `edit-${edit.revid}`;
+        tr.innerHTML = `
+          <td>${edit.timestamp}</td>
+          <td>${edit.wiki}</td>
+          <td>${edit.title}</td>
+          <td>${edit.comment || ''}</td>
+          <td>${edit.sizediff > 0 ? '+' + edit.sizediff : edit.sizediff}</td>
+          <td id="status-${edit.revid}">
+            <a href="${getDiffUrl(edit.wiki, edit.revid)}" target="_blank" class="btn btn-sm btn-outline-secondary mb-1">Diff</a>
+            <a href="${getHistUrl(edit.wiki, edit.title)}" target="_blank" class="btn btn-sm btn-outline-info mb-1">Hist</a>
+            <span class="badge bg-warning">Pending</span>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+    } catch (err) {
+      spinner.classList.add("d-none");
+      alert("Error fetching edits. Try again.");
+      console.error(err);
+    }
+  }
+
+  window.rollbackAll = async function() {
+    const rollbackAllBtn = document.getElementById("rollbackAllBtn");
+    rollbackAllBtn.disabled = true;
+    rollbackAllBtn.innerText = "Rolling back...";
+
+    try {
+      const username = document.getElementById("username").value.trim();
+      const response = await fetch("/rollback_all", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username })
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        result.rolled_back.forEach(edit => {
+          const statusTd = document.getElementById(`status-${edit.revid}`);
+          if (statusTd) statusTd.innerHTML = `<span class="badge bg-${edit.status === "success" ? "success" : "danger"}">${edit.status}</span>`;
+        });
+        rollbackAllBtn.innerText = "Rolled back all";
+        rollbackAllBtn.classList.remove("btn-danger");
+        rollbackAllBtn.classList.add("btn-success");
+      } else {
+        rollbackAllBtn.innerText = "Failed";
+        rollbackAllBtn.classList.add("btn-warning");
+      }
+
+    } catch (err) {
+      console.error(err);
+      rollbackAllBtn.innerText = "Error";
+      rollbackAllBtn.classList.add("btn-warning");
+    }
+  }
+})();
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

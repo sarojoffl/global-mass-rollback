@@ -1,0 +1,5 @@
+flask
+requests
+mwoauth
+gunicorn
+requests-oauthlib
