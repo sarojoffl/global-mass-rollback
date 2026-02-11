@@ -33,6 +33,15 @@
     return `https://${getWikiDomain(wiki)}/w/index.php?title=${encodeURIComponent(title)}&action=history`;
   }
 
+  // ---------------- Reset Rollback Button ----------------
+  function resetRollbackButton() {
+    const btn = document.getElementById("rollbackAllBtn");
+    btn.disabled = false;
+    btn.innerText = "Rollback All";
+    btn.classList.remove("btn-success");
+    btn.classList.add("btn-danger");
+  }
+
   // ---------------- Load Global Contribs ----------------
   window.loadGlobalContribs = async function() {
     const username = document.getElementById("username").value.trim();
@@ -42,17 +51,14 @@
     const card = document.getElementById("contribCard");
     const spinner = document.getElementById("spinner");
     const noEdits = document.getElementById("noEdits");
-    const rollbackAllBtn = document.getElementById("rollbackAllBtn");
     const loadMoreBtn = document.getElementById("loadMoreBtn");
 
     spinner.classList.remove("d-none");
     card.classList.add("d-none");
     noEdits.classList.add("d-none");
     tbody.innerHTML = "";
-    rollbackAllBtn.disabled = false;
-    rollbackAllBtn.innerText = "Rollback All";
+    resetRollbackButton();
     loadMoreBtn.classList.add("d-none"); // hide initially
-
     nextUccontinueMap = {}; // reset on new search
 
     try {
@@ -62,7 +68,7 @@
         body: "username=" + encodeURIComponent(username)
       });
       const data = await response.json();
-      spinner.classList.add("d-none"); // hide spinner
+      spinner.classList.add("d-none");
 
       if (!data.edits || data.edits.length === 0) {
         noEdits.classList.remove("d-none");
@@ -73,10 +79,9 @@
       currentEdits = data.edits;
       nextUccontinueMap = data.next_uccontinue_map || {};
       card.classList.remove("d-none");
-
       data.edits.forEach(addEditRow);
 
-      // Show Load More if there is more data
+      // Show Load More if more edits exist
       if (Object.keys(nextUccontinueMap).length > 0) {
         loadMoreBtn.classList.remove("d-none");
       }
@@ -113,6 +118,7 @@
     const username = document.getElementById("username").value.trim();
     const loadMoreBtn = document.getElementById("loadMoreBtn");
     const spinner = document.getElementById("spinner");
+    const tbody = document.getElementById("contribList");
 
     loadMoreBtn.disabled = true;
     loadMoreBtn.innerText = "Loading...";
@@ -131,12 +137,13 @@
       const data = await response.json();
 
       if (data.edits && data.edits.length > 0) {
-        currentEdits = currentEdits.concat(data.edits);
+        tbody.innerHTML = "";             // replace old edits
+        currentEdits = data.edits;
         data.edits.forEach(addEditRow);
         nextUccontinueMap = data.next_uccontinue_map || {};
+        resetRollbackButton();            // reset button for new edits
       }
 
-      // Hide Load More if no more edits
       if (!nextUccontinueMap || Object.keys(nextUccontinueMap).length === 0) {
         loadMoreBtn.classList.add("d-none");
       }
