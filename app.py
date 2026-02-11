@@ -22,19 +22,21 @@ OAUTH_MWURI = os.environ.get(
 
 if not SECRET_KEY or not CONSUMER_KEY or not CONSUMER_SECRET:
     raise RuntimeError("Missing required environment variables")
-    
+
 app.secret_key = SECRET_KEY
 
 # ---------------- Requests session ----------------
 session_requests = requests.Session()
 session_requests.headers.update({
-    "User-Agent": "GlobalMassRollback/1.0 (https://meta.wikimedia.org/wiki/User:Saroj)"
+    "User-Agent": "GlobalMassRollback/1.1 (https://meta.wikimedia.org/wiki/User:Saroj)"
 })
 
 # ---------------- Settings ----------------
 GLOBAL_EDIT_LIMIT = 50
-MAX_WORKERS = 10
+MAX_WORKERS = 4
 ROLLBACK_DELAY = 0.5
+REQUEST_TIMEOUT = 10
+
 
 # ============================================================
 # OAuth Routes
@@ -42,7 +44,7 @@ ROLLBACK_DELAY = 0.5
 
 @app.route("/login")
 def login():
-    consumer_token = mwoauth.ConsumerToken(CONSUMER_KEY, CONSUMER_SECRET)
+    consumer_token = mwoauth.ConsumerToken(CONSER_KEY := CONSUMER_KEY, CONSUMER_SECRET)
     try:
         redirect_url, request_token = mwoauth.initiate(OAUTH_MWURI, consumer_token)
         session["request_token"] = dict(zip(request_token._fields, request_token))
@@ -83,6 +85,7 @@ def logout():
 # ============================================================
 # OAuth Request Helper
 # ============================================================
+
 def oauth_request(url, method="GET", data=None, params=None):
     if "access_token" not in session:
         return None
@@ -99,75 +102,93 @@ def oauth_request(url, method="GET", data=None, params=None):
         signature_type='AUTH_HEADER'
     )
 
-    method = method.upper()
-    if method == "POST":
-        return requests.post(url, auth=auth, data=data, params=params, headers=session_requests.headers)
-    else:
-        return requests.get(url, auth=auth, params=params, headers=session_requests.headers)
+    try:
+        if method.upper() == "POST":
+            return requests.post(
+                url, auth=auth, data=data, params=params,
+                headers=session_requests.headers, timeout=REQUEST_TIMEOUT
+            )
+        else:
+            return requests.get(
+                url, auth=auth, params=params,
+                headers=session_requests.headers, timeout=REQUEST_TIMEOUT
+            )
+    except Exception as e:
+        print("OAuth request error:", e)
+        return None
 
 
 # ============================================================
 # Global Contributions
 # ============================================================
 
-def get_latest_revision(api_url, title):
-    try:
-        resp = session_requests.get(api_url, params={
-            "action": "query",
-            "titles": title,
-            "prop": "revisions",
-            "rvprop": "ids",
-            "format": "json"
-        }).json()
-        pages = resp["query"]["pages"]
-        for page in pages.values():
-            if "revisions" in page:
-                return page["revisions"][0]["revid"]
-    except:
-        pass
-    return None
-
-
 def fetch_global_contribs(username):
     meta_url = "https://meta.wikimedia.org/w/api.php"
-    resp = session_requests.get(meta_url, params={
-        "action": "query",
-        "meta": "globaluserinfo",
-        "guiuser": username,
-        "guiprop": "merged",
-        "format": "json"
-    }).json()
 
-    merged = resp["query"]["globaluserinfo"]["merged"]
-    wiki_api_map = {w["wiki"]: w["url"] + "/w/api.php" for w in merged if w["editcount"] > 0}
+    try:
+        resp = session_requests.get(meta_url, params={
+            "action": "query",
+            "meta": "globaluserinfo",
+            "guiuser": username,
+            "guiprop": "merged",
+            "format": "json"
+        }, timeout=REQUEST_TIMEOUT).json()
+    except Exception as e:
+        print("Meta fetch error:", e)
+        return []
+
+    merged = resp.get("query", {}).get("globaluserinfo", {}).get("merged", [])
+    wiki_api_map = {
+        w["wiki"]: w["url"] + "/w/api.php"
+        for w in merged
+        if w.get("editcount", 0) > 0
+    }
 
     rollbackable = []
     lock = threading.Lock()
 
     def worker(wiki, api_url):
+
+        # Early stop if limit reached
+        with lock:
+            if len(rollbackable) >= GLOBAL_EDIT_LIMIT:
+                return
+
         try:
-            resp = session_requests.get(api_url, params={
+            response = session_requests.get(api_url, params={
                 "action": "query",
                 "list": "usercontribs",
                 "ucuser": username,
-                "uclimit": 100,
-                "ucprop": "title|ids|timestamp|user|comment|sizediff",
+                "uclimit": 20,
+                "ucprop": "title|ids|timestamp|user|comment|sizediff|flags",
                 "format": "json"
-            }).json()
-            for edit in resp["query"]["usercontribs"]:
-                latest = get_latest_revision(api_url, edit["title"])
-                if latest == edit["revid"]:
+            }, timeout=REQUEST_TIMEOUT)
+
+            data = response.json()
+            contribs = data.get("query", {}).get("usercontribs", [])
+
+            for edit in contribs:
+
+                # Only keep latest (top) revisions
+                if "top" in edit:
                     edit["wiki"] = wiki
                     edit["wiki_api"] = api_url
+
                     with lock:
                         if len(rollbackable) < GLOBAL_EDIT_LIMIT:
                             rollbackable.append(edit)
+                        else:
+                            return
+
         except Exception as e:
-            print("Worker error:", e)
+            print(f"Worker error ({wiki}):", e)
 
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
-        futures = [executor.submit(worker, wiki, api) for wiki, api in wiki_api_map.items()]
-        for f in as_completed(futures):
+        futures = [
+            executor.submit(worker, wiki, api)
+            for wiki, api in wiki_api_map.items()
+        ]
+        for _ in as_completed(futures):
             pass
 
     rollbackable.sort(key=lambda x: x["timestamp"], reverse=True)
@@ -207,6 +228,7 @@ def rollback_all():
 
     for edit in edits:
         api = edit["wiki_api"]
+
         try:
             token_resp = oauth_request(api, params={
                 "action": "query",
@@ -214,6 +236,10 @@ def rollback_all():
                 "type": "rollback",
                 "format": "json"
             })
+
+            if not token_resp:
+                raise Exception("Token request failed")
+
             token_json = token_resp.json()
             token = token_json["query"]["tokens"]["rollbacktoken"]
 
@@ -226,6 +252,7 @@ def rollback_all():
             })
 
             r_json = r.json()
+
             if "error" in r_json:
                 status = "failed"
                 error_msg = r_json["error"]
