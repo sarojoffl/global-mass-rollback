@@ -12,7 +12,6 @@ import os
 app = Flask(__name__)
 
 # ---------------- Config ----------------
-
 SECRET_KEY = os.environ.get("SECRET_KEY")
 CONSUMER_KEY = os.environ.get("CONSUMER_KEY")
 CONSUMER_SECRET = os.environ.get("CONSUMER_SECRET")
@@ -27,14 +26,12 @@ if not SECRET_KEY or not CONSUMER_KEY or not CONSUMER_SECRET:
 app.secret_key = SECRET_KEY
 
 # ---------------- Requests session ----------------
-
 session_requests = requests.Session()
 session_requests.headers.update({
     "User-Agent": "GlobalMassRollback/1.0 (https://meta.wikimedia.org/wiki/User:Saroj)"
 })
 
 # ---------------- Settings ----------------
-
 GLOBAL_EDIT_LIMIT = 50
 MAX_WORKERS = 10
 ROLLBACK_DELAY = 0.5
@@ -84,9 +81,8 @@ def logout():
 
 
 # ============================================================
-# OAuth Request Helper using requests_oauthlib.OAuth1
+# OAuth Request Helper
 # ============================================================
-
 def oauth_request(url, method="GET", data=None, params=None):
     if "access_token" not in session:
         return None
@@ -162,7 +158,7 @@ def fetch_global_contribs(username):
                 latest = get_latest_revision(api_url, edit["title"])
                 if latest == edit["revid"]:
                     edit["wiki"] = wiki
-                    edit["wiki_api"] = api_url  # store full API URL
+                    edit["wiki_api"] = api_url
                     with lock:
                         if len(rollbackable) < GLOBAL_EDIT_LIMIT:
                             rollbackable.append(edit)
@@ -206,27 +202,21 @@ def rollback_all():
     if "access_token" not in session:
         return jsonify({"success": False, "message": "Login required"})
 
-    username = request.json.get("username")
-    edits = fetch_global_contribs(username)
+    edits = request.json.get("edits", [])
     results = []
 
     for edit in edits:
-        api = edit["wiki_api"]  # full API URL for that wiki
+        api = edit["wiki_api"]
         try:
-            # Get rollback token (required specifically for rollback)
             token_resp = oauth_request(api, params={
                 "action": "query",
                 "meta": "tokens",
                 "type": "rollback",
                 "format": "json"
             })
-            if not token_resp:
-                raise Exception("No response for rollback token")
-
             token_json = token_resp.json()
             token = token_json["query"]["tokens"]["rollbacktoken"]
 
-            # Perform rollback
             r = oauth_request(api, method="POST", data={
                 "action": "rollback",
                 "title": edit["title"],
@@ -235,17 +225,13 @@ def rollback_all():
                 "format": "json"
             })
 
-            if not r:
+            r_json = r.json()
+            if "error" in r_json:
                 status = "failed"
-                error_msg = "No response from API"
+                error_msg = r_json["error"]
             else:
-                r_json = r.json()
-                if "error" in r_json:
-                    status = "failed"
-                    error_msg = r_json["error"]
-                else:
-                    status = "success"
-                    error_msg = None
+                status = "success"
+                error_msg = None
 
         except Exception as e:
             status = "failed"

@@ -197,38 +197,46 @@
     }
   }
 
+  // ---------------- Live rollback per edit ----------------
   window.rollbackAll = async function() {
     const rollbackAllBtn = document.getElementById("rollbackAllBtn");
     rollbackAllBtn.disabled = true;
     rollbackAllBtn.innerText = "Rolling back...";
 
-    try {
-      const username = document.getElementById("username").value.trim();
-      const response = await fetch("/rollback_all", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username })
-      });
-
-      const result = await response.json();
-      if (result.success) {
-        result.results.forEach(edit => {
-          const statusTd = document.getElementById(`status-${edit.revid}`);
-          if (statusTd) statusTd.innerHTML = `<span class="badge bg-${edit.status === "success" ? "success" : "danger"}">${edit.status}</span>`;
+    for (let edit of currentEdits) {
+      try {
+        const response = await fetch("/rollback_all", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ edits: [edit] })
         });
-        rollbackAllBtn.innerText = "Rolled back all";
-        rollbackAllBtn.classList.remove("btn-danger");
-        rollbackAllBtn.classList.add("btn-success");
-      } else {
-        rollbackAllBtn.innerText = "Failed";
-        rollbackAllBtn.classList.add("btn-warning");
+
+        const result = await response.json();
+        if (result.success && result.results.length > 0) {
+          const res = result.results[0];
+          const statusTd = document.getElementById(`status-${res.revid}`);
+          if (!statusTd) continue;
+
+          let badge = statusTd.querySelector(".badge");
+          if (!badge) {
+            badge = document.createElement("span");
+            statusTd.appendChild(badge);
+          }
+          badge.className = `badge bg-${res.status === "success" ? "success" : "danger"}`;
+          badge.innerText = res.status;
+        }
+
+      } catch (err) {
+        console.error(err);
       }
 
-    } catch (err) {
-      console.error(err);
-      rollbackAllBtn.innerText = "Error";
-      rollbackAllBtn.classList.add("btn-warning");
+      // Small delay to avoid hitting API too fast
+      await new Promise(r => setTimeout(r, 500));
     }
+
+    rollbackAllBtn.innerText = "Rollback complete";
+    rollbackAllBtn.classList.remove("btn-danger");
+    rollbackAllBtn.classList.add("btn-success");
   }
 })();
 </script>
