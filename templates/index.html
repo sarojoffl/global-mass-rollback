@@ -212,7 +212,7 @@
 
       const result = await response.json();
       if (result.success) {
-        result.rolled_back.forEach(edit => {
+        result.results.forEach(edit => {
           const statusTd = document.getElementById(`status-${edit.revid}`);
           if (statusTd) statusTd.innerHTML = `<span class="badge bg-${edit.status === "success" ? "success" : "danger"}">${edit.status}</span>`;
         });
