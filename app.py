@@ -252,6 +252,7 @@ def rollback_all():
             error_msg = str(e)
 
         results.append({
+            "revid": edit["revid"],
             "wiki": edit["wiki"],
             "title": edit["title"],
             "status": status,
