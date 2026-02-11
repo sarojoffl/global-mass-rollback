@@ -53,7 +53,10 @@
     <div id="contribCard" class="card shadow-sm d-none">
       <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
         <span>Latest Edits</span>
-        <button id="rollbackAllBtn" class="btn btn-sm btn-danger" onclick="confirmRollbackAll()">Rollback All</button>
+        <div>
+          <button id="rollbackAllBtn" class="btn btn-sm btn-danger me-2" onclick="confirmRollbackAll()">Rollback All</button>
+          <button id="loadMoreBtn" class="btn btn-sm btn-secondary d-none" onclick="loadMoreEdits()">Load More</button>
+        </div>
       </div>
       <div class="card-body p-0">
         <div class="table-responsive">
@@ -70,10 +73,6 @@
             </thead>
             <tbody id="contribList"></tbody>
           </table>
-        </div>
-        <!-- Load More Button -->
-        <div class="text-center my-3 d-none" id="loadMoreWrapper">
-          <button id="loadMoreBtn" class="btn btn-secondary" onclick="loadMoreEdits()">Load More</button>
         </div>
       </div>
     </div>

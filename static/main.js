@@ -43,7 +43,7 @@
     const spinner = document.getElementById("spinner");
     const noEdits = document.getElementById("noEdits");
     const rollbackAllBtn = document.getElementById("rollbackAllBtn");
-    const loadMoreWrapper = document.getElementById("loadMoreWrapper");
+    const loadMoreBtn = document.getElementById("loadMoreBtn");
 
     spinner.classList.remove("d-none");
     card.classList.add("d-none");
@@ -51,7 +51,7 @@
     tbody.innerHTML = "";
     rollbackAllBtn.disabled = false;
     rollbackAllBtn.innerText = "Rollback All";
-    loadMoreWrapper.classList.add("d-none"); // hide initially
+    loadMoreBtn.classList.add("d-none"); // hide initially
 
     nextUccontinueMap = {}; // reset on new search
 
@@ -62,7 +62,7 @@
         body: "username=" + encodeURIComponent(username)
       });
       const data = await response.json();
-      spinner.classList.add("d-none");
+      spinner.classList.add("d-none"); // hide spinner
 
       if (!data.edits || data.edits.length === 0) {
         noEdits.classList.remove("d-none");
@@ -78,7 +78,7 @@
 
       // Show Load More if there is more data
       if (Object.keys(nextUccontinueMap).length > 0) {
-        loadMoreWrapper.classList.remove("d-none");
+        loadMoreBtn.classList.remove("d-none");
       }
 
     } catch (err) {
@@ -138,7 +138,7 @@
 
       // Hide Load More if no more edits
       if (!nextUccontinueMap || Object.keys(nextUccontinueMap).length === 0) {
-        document.getElementById("loadMoreWrapper").classList.add("d-none");
+        loadMoreBtn.classList.add("d-none");
       }
 
     } catch (err) {
