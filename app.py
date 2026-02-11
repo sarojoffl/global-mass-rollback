@@ -8,20 +8,23 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import threading
 import time
 import os
-import tomllib
 
 app = Flask(__name__)
 
 # ---------------- Config ----------------
 
-__dir__ = os.path.dirname(__file__)
-with open(os.path.join(__dir__, "config.toml"), "rb") as f:
-    config = tomllib.load(f)
+SECRET_KEY = os.environ.get("SECRET_KEY")
+CONSUMER_KEY = os.environ.get("CONSUMER_KEY")
+CONSUMER_SECRET = os.environ.get("CONSUMER_SECRET")
+OAUTH_MWURI = os.environ.get(
+    "OAUTH_MWURI",
+    "https://meta.wikimedia.org/w/index.php"
+)
 
-app.secret_key = config["SECRET_KEY"]
-CONSUMER_KEY = config["CONSUMER_KEY"]
-CONSUMER_SECRET = config["CONSUMER_SECRET"]
-OAUTH_MWURI = config["OAUTH_MWURI"]
+if not SECRET_KEY or not CONSUMER_KEY or not CONSUMER_SECRET:
+    raise RuntimeError("Missing required environment variables")
+    
+app.secret_key = SECRET_KEY
 
 # ---------------- Requests session ----------------
 
