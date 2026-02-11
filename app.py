@@ -122,7 +122,10 @@ def oauth_request(url, method="GET", data=None, params=None):
 # Global Contributions
 # ============================================================
 
-def fetch_global_contribs(username):
+def fetch_global_contribs(username, uccontinue_map=None):
+    if uccontinue_map is None:
+        uccontinue_map = {}
+
     meta_url = "https://meta.wikimedia.org/w/api.php"
 
     try:
@@ -135,7 +138,7 @@ def fetch_global_contribs(username):
         }, timeout=REQUEST_TIMEOUT).json()
     except Exception as e:
         print("Meta fetch error:", e)
-        return []
+        return [], {}
 
     merged = resp.get("query", {}).get("globaluserinfo", {}).get("merged", [])
     wiki_api_map = {
@@ -145,54 +148,58 @@ def fetch_global_contribs(username):
     }
 
     rollbackable = []
+    next_uccontinue_map = {}
     lock = threading.Lock()
 
-    def worker(wiki, api_url):
-
-        # Early stop if limit reached
+    def worker(wiki, api_url, continue_token=None):
         with lock:
             if len(rollbackable) >= GLOBAL_EDIT_LIMIT:
                 return
 
         try:
-            response = session_requests.get(api_url, params={
+            params = {
                 "action": "query",
                 "list": "usercontribs",
                 "ucuser": username,
                 "uclimit": 20,
                 "ucprop": "title|ids|timestamp|user|comment|sizediff|flags",
                 "format": "json"
-            }, timeout=REQUEST_TIMEOUT)
+            }
+            if continue_token:
+                params["uccontinue"] = continue_token
 
+            response = session_requests.get(api_url, params=params, timeout=REQUEST_TIMEOUT)
             data = response.json()
             contribs = data.get("query", {}).get("usercontribs", [])
 
             for edit in contribs:
-
-                # Only keep latest (top) revisions
                 if "top" in edit:
                     edit["wiki"] = wiki
                     edit["wiki_api"] = api_url
-
                     with lock:
                         if len(rollbackable) < GLOBAL_EDIT_LIMIT:
                             rollbackable.append(edit)
                         else:
                             return
 
+            # Save uccontinue for next batch if available
+            cont = data.get("continue", {}).get("uccontinue")
+            if cont:
+                next_uccontinue_map[wiki] = cont
+
         except Exception as e:
             print(f"Worker error ({wiki}):", e)
 
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
         futures = [
-            executor.submit(worker, wiki, api)
+            executor.submit(worker, wiki, api, uccontinue_map.get(wiki))
             for wiki, api in wiki_api_map.items()
         ]
         for _ in as_completed(futures):
             pass
 
     rollbackable.sort(key=lambda x: x["timestamp"], reverse=True)
-    return rollbackable[:GLOBAL_EDIT_LIMIT]
+    return rollbackable[:GLOBAL_EDIT_LIMIT], next_uccontinue_map
 
 
 # ============================================================
@@ -214,8 +221,19 @@ def get_global_contribs_route():
         return jsonify([])
 
     username = request.form.get("username")
-    edits = fetch_global_contribs(username)
-    return jsonify(edits)
+    uccontinue_map = request.form.get("uccontinue_map")
+    if uccontinue_map:
+        import json
+        uccontinue_map = json.loads(uccontinue_map)
+    else:
+        uccontinue_map = {}
+
+    edits, next_uccontinue_map = fetch_global_contribs(username, uccontinue_map)
+
+    return jsonify({
+        "edits": edits,
+        "next_uccontinue_map": next_uccontinue_map
+    })
 
 
 @app.route("/rollback_all", methods=["POST"])

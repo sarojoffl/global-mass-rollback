@@ -11,6 +11,7 @@
   };
   const mainProjects = ['wiktionary', 'wikibooks', 'wikinews', 'wikiquote', 'wikisource', 'wikiversity', 'wikivoyage'];
   let currentEdits = [];
+  let nextUccontinueMap = {};
 
   function getWikiDomain(wiki) {
     if (specialWikis[wiki]) return specialWikis[wiki];
@@ -32,6 +33,7 @@
     return `https://${getWikiDomain(wiki)}/w/index.php?title=${encodeURIComponent(title)}&action=history`;
   }
 
+  // ---------------- Load Global Contribs ----------------
   window.loadGlobalContribs = async function() {
     const username = document.getElementById("username").value.trim();
     if (!username) return alert("Please enter a username.");
@@ -41,6 +43,7 @@
     const spinner = document.getElementById("spinner");
     const noEdits = document.getElementById("noEdits");
     const rollbackAllBtn = document.getElementById("rollbackAllBtn");
+    const loadMoreWrapper = document.getElementById("loadMoreWrapper");
 
     spinner.classList.remove("d-none");
     card.classList.add("d-none");
@@ -48,6 +51,9 @@
     tbody.innerHTML = "";
     rollbackAllBtn.disabled = false;
     rollbackAllBtn.innerText = "Rollback All";
+    loadMoreWrapper.classList.add("d-none"); // hide initially
+
+    nextUccontinueMap = {}; // reset on new search
 
     try {
       const response = await fetch("/get_global_contribs", {
@@ -58,38 +64,91 @@
       const data = await response.json();
       spinner.classList.add("d-none");
 
-      if (!data || data.length === 0) {
+      if (!data.edits || data.edits.length === 0) {
         noEdits.classList.remove("d-none");
         currentEdits = [];
         return;
       }
 
-      currentEdits = data;
+      currentEdits = data.edits;
+      nextUccontinueMap = data.next_uccontinue_map || {};
       card.classList.remove("d-none");
 
-      data.forEach(edit => {
-        const tr = document.createElement("tr");
-        tr.id = `edit-${edit.revid}`;
-        tr.innerHTML = `
-          <td>${edit.timestamp}</td>
-          <td>${edit.wiki}</td>
-          <td>${edit.title}</td>
-          <td>${edit.comment || ''}</td>
-          <td>${edit.sizediff > 0 ? '+' + edit.sizediff : edit.sizediff}</td>
-          <td id="status-${edit.revid}">
-            <a href="${getDiffUrl(edit.wiki, edit.revid)}" target="_blank" class="btn btn-sm btn-outline-secondary mb-1">Diff</a>
-            <a href="${getHistUrl(edit.wiki, edit.title)}" target="_blank" class="btn btn-sm btn-outline-info mb-1">Hist</a>
-            <span class="badge bg-warning">Pending</span>
-          </td>
-        `;
-        tbody.appendChild(tr);
-      });
+      data.edits.forEach(addEditRow);
+
+      // Show Load More if there is more data
+      if (Object.keys(nextUccontinueMap).length > 0) {
+        loadMoreWrapper.classList.remove("d-none");
+      }
 
     } catch (err) {
       spinner.classList.add("d-none");
       alert("Error fetching edits. Try again.");
       console.error(err);
     }
+  }
+
+  // ---------------- Helper to add a row ----------------
+  function addEditRow(edit) {
+    const tbody = document.getElementById("contribList");
+    const tr = document.createElement("tr");
+    tr.id = `edit-${edit.revid}`;
+    tr.innerHTML = `
+      <td>${edit.timestamp}</td>
+      <td>${edit.wiki}</td>
+      <td>${edit.title}</td>
+      <td>${edit.comment || ''}</td>
+      <td>${edit.sizediff > 0 ? '+' + edit.sizediff : edit.sizediff}</td>
+      <td id="status-${edit.revid}">
+        <a href="${getDiffUrl(edit.wiki, edit.revid)}" target="_blank" class="btn btn-sm btn-outline-secondary mb-1">Diff</a>
+        <a href="${getHistUrl(edit.wiki, edit.title)}" target="_blank" class="btn btn-sm btn-outline-info mb-1">Hist</a>
+        <span class="badge bg-warning">Pending</span>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  }
+
+  // ---------------- Load More Edits ----------------
+  window.loadMoreEdits = async function() {
+    const username = document.getElementById("username").value.trim();
+    const loadMoreBtn = document.getElementById("loadMoreBtn");
+    const spinner = document.getElementById("spinner");
+
+    loadMoreBtn.disabled = true;
+    loadMoreBtn.innerText = "Loading...";
+    spinner.classList.remove("d-none");
+
+    try {
+      const formData = new URLSearchParams();
+      formData.append("username", username);
+      formData.append("uccontinue_map", JSON.stringify(nextUccontinueMap));
+
+      const response = await fetch("/get_global_contribs", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: formData.toString()
+      });
+      const data = await response.json();
+
+      if (data.edits && data.edits.length > 0) {
+        currentEdits = currentEdits.concat(data.edits);
+        data.edits.forEach(addEditRow);
+        nextUccontinueMap = data.next_uccontinue_map || {};
+      }
+
+      // Hide Load More if no more edits
+      if (!nextUccontinueMap || Object.keys(nextUccontinueMap).length === 0) {
+        document.getElementById("loadMoreWrapper").classList.add("d-none");
+      }
+
+    } catch (err) {
+      console.error(err);
+      alert("Error loading more edits.");
+    }
+
+    spinner.classList.add("d-none");
+    loadMoreBtn.disabled = false;
+    loadMoreBtn.innerText = "Load More";
   }
 
   // ---------------- Confirmation for Rollback All ----------------
