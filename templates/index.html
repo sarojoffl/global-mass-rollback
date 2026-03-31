@@ -30,6 +30,12 @@
       <p class="text-muted mb-4">Authenticate with Wikimedia OAuth to use the tool.</p>
       <a href="/login" class="btn btn-gradient btn-lg w-100">Login with Wikimedia</a>
     </div>
+  {% elif not is_authorized %}
+    <div class="alert alert-danger text-center" role="alert">
+      <strong>Access Denied.</strong> This tool is only available to
+      <strong>global rollbackers</strong> and <strong>stewards</strong>.<br>
+      <small class="text-muted">If you have these rights, try logging out and back in.</small>
+    </div>
   {% else %}
     <div class="card mb-4 shadow-sm">
       <div class="card-body">

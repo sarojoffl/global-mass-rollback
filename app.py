@@ -70,6 +70,7 @@ def oauth_callback():
         identity = mwoauth.identify(OAUTH_MWURI, consumer_token, access_token)
         session["access_token"] = dict(zip(access_token._fields, access_token))
         session["username"] = identity["username"]
+        session["is_authorized"] = is_authorized_user(identity["username"])
     except Exception as e:
         print("OAuth complete failed:", e)
 
@@ -116,6 +117,27 @@ def oauth_request(url, method="GET", data=None, params=None):
     except Exception as e:
         print("OAuth request error:", e)
         return None
+
+
+# ============================================================
+# Authorization Helper
+# ============================================================
+
+def is_authorized_user(username):
+    meta_url = "https://meta.wikimedia.org/w/api.php"
+    try:
+        resp = session_requests.get(meta_url, params={
+            "action": "query",
+            "meta": "globaluserinfo",
+            "guiuser": username,
+            "guiprop": "groups",
+            "format": "json"
+        }, timeout=REQUEST_TIMEOUT).json()
+        global_groups = resp.get("query", {}).get("globaluserinfo", {}).get("groups", [])
+        return any(g in global_groups for g in ["global-rollbacker", "steward"])
+    except Exception as e:
+        print("Auth check failed:", e)
+        return False
 
 
 # ============================================================
@@ -211,7 +233,8 @@ def index():
     return render_template(
         "index.html",
         logged_in="access_token" in session,
-        username=session.get("username")
+        username=session.get("username"),
+        is_authorized=session.get("is_authorized", False)
     )
 
 
@@ -219,6 +242,9 @@ def index():
 def get_global_contribs_route():
     if "access_token" not in session:
         return jsonify([])
+
+    if not session.get("is_authorized"):
+        return jsonify({"success": False, "message": "This tool is only for global rollbackers and stewards."})
 
     username = request.form.get("username")
     uccontinue_map = request.form.get("uccontinue_map")
@@ -240,6 +266,9 @@ def get_global_contribs_route():
 def rollback_all():
     if "access_token" not in session:
         return jsonify({"success": False, "message": "Login required"})
+
+    if not session.get("is_authorized"):
+        return jsonify({"success": False, "message": "This tool is only for global rollbackers and stewards."})
 
     edits = request.json.get("edits", [])
     results = []
