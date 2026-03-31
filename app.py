@@ -291,14 +291,17 @@ def rollback_all():
             token_json = token_resp.json()
             token = token_json["query"]["tokens"]["rollbacktoken"]
 
-            r = oauth_request(api, method="POST", data={
+            rollback_data = {
                 "action": "rollback",
                 "title": edit["title"],
                 "user": edit["user"],
                 "token": token,
-                "markbot": "1" if mark_as_bot else "0",
                 "format": "json"
-            })
+            }
+            if mark_as_bot:
+                rollback_data["markbot"] = "1"
+
+            r = oauth_request(api, method="POST", data=rollback_data)
 
             r_json = r.json()
 
