@@ -271,6 +271,7 @@ def rollback_all():
         return jsonify({"success": False, "message": "This tool is only for global rollbackers and stewards."})
 
     edits = request.json.get("edits", [])
+    mark_as_bot = request.json.get("markbot", False)
     results = []
 
     for edit in edits:
@@ -295,6 +296,7 @@ def rollback_all():
                 "title": edit["title"],
                 "user": edit["user"],
                 "token": token,
+                "markbot": "1" if mark_as_bot else "0",
                 "format": "json"
             })
 

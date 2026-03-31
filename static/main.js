@@ -176,7 +176,7 @@
         const response = await fetch("/rollback_all", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ edits: [edit] })
+          body: JSON.stringify({ edits: [edit], markbot: document.getElementById("markbotCheck").checked })
         });
         const result = await response.json();
         if (result.success && result.results.length > 0) {
