@@ -134,7 +134,7 @@ def is_authorized_user(username):
             "format": "json"
         }, timeout=REQUEST_TIMEOUT).json()
         global_groups = resp.get("query", {}).get("globaluserinfo", {}).get("groups", [])
-        return any(g in global_groups for g in ["global-rollbacker", "steward"])
+        return any(g in global_groups for g in ["global-rollbacker", "steward", "global-sysop"])
     except Exception as e:
         print("Auth check failed:", e)
         return False
@@ -244,7 +244,7 @@ def get_global_contribs_route():
         return jsonify([])
 
     if not session.get("is_authorized"):
-        return jsonify({"success": False, "message": "This tool is only for global rollbackers and stewards."})
+        return jsonify({"success": False, "message": "This tool is only for global rollbackers, stewards, and global sysops."})
 
     username = request.form.get("username")
     uccontinue_map = request.form.get("uccontinue_map")
