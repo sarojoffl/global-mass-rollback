@@ -108,7 +108,8 @@ def me():
 
 @app.route("/")
 def index():
-    return page("index.html")
+    # who you are goes in the page, so it never depends on another request
+    return page("index.html", me=me(), authorized=bool(session.get("authorized")))
 
 
 @app.route("/js/<path:name>")
