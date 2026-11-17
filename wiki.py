@@ -98,16 +98,36 @@ def text_match(edit, f):
     return True
 
 
+def rollbackable(api, edits):
+    # rollback needs an earlier revision by someone else. page creations never
+    # have one, and if the user made the previous revision too we ask the page
+    edits = [e for e in edits if e["parentid"]]
+    parents = {}
+    for i in range(0, len(edits), 50):
+        ids = "|".join(str(e["parentid"]) for e in edits[i:i + 50])
+        d = get_json(api, {"action": "query", "prop": "revisions", "revids": ids, "rvprop": "ids|user"})
+        for page in d.get("query", {}).get("pages", []):
+            for r in page.get("revisions", []):
+                parents[r["revid"]] = r.get("user")
+    keep = []
+    for e in edits:
+        by = parents.get(e["parentid"])
+        if by and by != e["user"]:
+            keep.append(e)
+            continue
+        # same user before (or hidden), see if anyone else ever edited the page
+        d = get_json(api, {"action": "query", "prop": "revisions", "titles": e["title"], "rvlimit": 1, "rvexcludeuser": e["user"], "rvprop": "ids"})
+        pages = d.get("query", {}).get("pages", [])
+        if pages and pages[0].get("revisions"):
+            keep.append(e)
+    return keep
+
+
 def wiki_contribs(username, wiki, url, f, limit, cont):
-    # text filters aren't in the api, so page a few times until enough match
+    # text filters and the rollback check aren't in the api, so page a few times until enough match
     api = url + "/w/api.php"
-    show = ["top"]
-    if f.get("kind") == "new":
-        show.append("new")
-    elif f.get("kind") == "existing":
-        show.append("!new")
     params = {
-        "action": "query", "list": "usercontribs", "ucuser": username, "ucshow": "|".join(show),
+        "action": "query", "list": "usercontribs", "ucuser": username, "ucshow": "top",
         "ucprop": "ids|title|timestamp|comment|sizediff|flags|tags", "uclimit": min(limit, 500),
     }
     if f.get("namespace") not in (None, ""):
@@ -126,14 +146,16 @@ def wiki_contribs(username, wiki, url, f, limit, cont):
             p["uccontinue"] = cont
         d = get_json(api, p)
         pages += 1
+        batch = []
         for c in d.get("query", {}).get("usercontribs", []):
             if text_match(c, f):
-                picked.append({
+                batch.append({
                     "wiki": wiki, "wiki_url": url, "wiki_api": api, "revid": c["revid"], "parentid": c.get("parentid", 0),
                     "title": c["title"], "ns": c.get("ns", 0), "timestamp": c["timestamp"], "comment": c.get("comment", ""),
                     "sizediff": c.get("sizediff"), "new": bool(c.get("new")), "minor": bool(c.get("minor")), "tags": c.get("tags", []),
-                    "user": username,
+                    "user": c.get("user", username),
                 })
+        picked += rollbackable(api, batch)
         cont = d.get("continue", {}).get("uccontinue")
         if not cont or len(picked) >= limit or pages >= 5:
             return picked[:limit], cont, picked[limit:]
