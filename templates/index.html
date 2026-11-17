@@ -1,52 +1,34 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Global Mass Rollback</title>
-  <link rel="icon" href="{{ assets.logo }}" type="image/svg+xml">
-  <link rel="stylesheet" href="{{ assets.tokens }}">
-  <link rel="stylesheet" href="{{ assets.dark }}" id="gmr-dark" media="not all">
-  <script>
-    // Apply saved theme before first paint to prevent flash
-    try {
-      if (localStorage.getItem('gmr-theme') === 'dark') {
-        document.documentElement.dataset.theme = 'dark';
-        document.getElementById('gmr-dark').media = 'all';
-      }
-    } catch (e) {}
-  </script>
-  <link rel="stylesheet" href="{{ assets.codex_css }}">
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v={{ v }}">
-  <script type="importmap">
-    {"imports": {"vue": {{ assets.vue | tojson }}, "@wikimedia/codex": {{ assets.codex | tojson }}, "@wikimedia/codex-icons": {{ assets.icons | tojson }}}}
-  </script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Global Mass Rollback</title>
+<link rel="icon" href="{{ assets.logo }}" type="image/svg+xml">
+<link rel="stylesheet" href="{{ assets.tokens }}">
+<link rel="stylesheet" href="{{ assets.dark }}" id="gmr-dark" media="not all">
+<script>
+// saved theme before first paint
+try { if (localStorage.getItem('gmr-theme') === 'dark') { document.documentElement.dataset.theme = 'dark'; document.getElementById('gmr-dark').media = 'all'; } } catch (e) {}
+</script>
+<link rel="stylesheet" href="{{ assets.codex_css }}">
+<link rel="stylesheet" href="css/app.css?v={{ v }}">
+<script type="importmap">
+{"imports": {"vue": {{ assets.vue|tojson }}, "@wikimedia/codex": {{ assets.codex|tojson }}, "@wikimedia/codex-icons": {{ assets.icons|tojson }}}}
+</script>
 </head>
 <body>
-<div id="app"
-  data-logo="{{ assets.logo }}"
-  data-logged-in="{{ 'true' if logged_in else 'false' }}"
-  data-username="{{ username or '' }}"
-  data-is-authorized="{{ 'true' if is_authorized else 'false' }}"
->
-  <!-- Loading state shown before Vue mounts -->
-  <div class="boot">
-    <div class="cdx-progress-indicator">
-      <div class="cdx-progress-indicator__indicator">
-        <progress class="cdx-progress-indicator__indicator__progress" aria-label="Loading"></progress>
-      </div>
-    </div>
-  </div>
+<div id="app" data-logo="{{ assets.logo }}" data-source="{{ source }}" data-commit="{{ commit }}">
+  <div class="boot"><div class="cdx-progress-indicator"><div class="cdx-progress-indicator__indicator"><progress class="cdx-progress-indicator__indicator__progress" aria-label="Loading"></progress></div></div></div>
 </div>
-<script type="module" src="{{ url_for('static', filename='js/main.js') }}?v={{ v }}"></script>
+<script type="module" src="js/main.js?v={{ v }}"></script>
 <script>
-  // If Vue or Codex never load (CDN down, old browser) show a message instead of blank page
-  setTimeout(function () {
-    var el = document.getElementById('app');
-    if (el && !el.hasAttribute('data-v-app')) {
-      el.querySelector('.boot').textContent = 'The page could not be loaded. Please reload, or try another browser.';
-    }
-  }, 15000);
+// cdn down or old browser
+setTimeout(function () {
+  var el = document.getElementById('app');
+  if (el && !el.hasAttribute('data-v-app')) el.querySelector('.boot').textContent = 'The page could not be loaded. Please reload, or try another browser.';
+}, 15000);
 </script>
 </body>
 </html>
