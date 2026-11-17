@@ -1,0 +1,64 @@
+# check, then deploy to toolforge on every push to main
+# needs the TOOLS_DEPLOY_TOKEN secret: toolforge components deploy-token create
+name: deploy
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version-file: .python-version
+      - run: pip install -r requirements.txt
+      - name: python files compile and the app imports
+        env:
+          SECRET_KEY: check
+          CONSUMER_KEY: check
+          CONSUMER_SECRET: check
+          GMR_DATA_DIR: /tmp/gmr-data
+        run: |
+          python -m compileall -q app.py wiki.py usage.py
+          python -c "import app"
+      - name: js files parse
+        run: |
+          for f in $(find js -name '*.js'); do cp "$f" /tmp/check.mjs && node --check /tmp/check.mjs || { echo "$f"; exit 1; }; done
+
+  deploy:
+    needs: check
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    env:
+      API: https://api.svc.toolforge.org/components/v1/tool/global-mass-rollback
+      TOOLS_DEPLOY_TOKEN: ${{ secrets.TOOLS_DEPLOY_TOKEN }}
+      MESSAGE: ${{ github.event.head_commit.message || 'manual deploy' }}
+    steps:
+      - name: deploy and wait for it
+        run: |
+          set -euo pipefail
+          body=$(jq -n --arg d "${GITHUB_SHA::7}: ${MESSAGE%%$'\n'*}" '{description: $d}')
+          resp=$(curl -sS --fail-with-body -X POST --json "$body" "$API/deployment?token=$TOOLS_DEPLOY_TOKEN")
+          echo "$resp" | jq .
+          id=$(echo "$resp" | jq -r '.data.deploy_id')
+          for _ in $(seq 1 60); do
+            sleep 15
+            status=$(curl -sS --fail-with-body "$API/deployment/$id?token=$TOOLS_DEPLOY_TOKEN" | jq -r '.data.status')
+            echo "deployment $id: $status"
+            case "$status" in
+              pending|running) ;;
+              successful) exit 0 ;;
+              *) curl -sS "$API/deployment/$id?token=$TOOLS_DEPLOY_TOKEN" | jq .; exit 1 ;;
+            esac
+          done
+          echo "gave up waiting for deployment $id"
+          exit 1
