@@ -17,7 +17,7 @@ const sizeClass = n => (n > 0 ? 'size-add' : n < 0 ? 'size-rm' : 'size-zero');
 export const RollbackPage = {
   components: { CdxButton, CdxCheckbox, CdxDialog, CdxField, CdxIcon, CdxTextInput, CdxMessage, CdxProgressBar, CdxToggleButton, DiffView, SearchForm },
   setup() {
-    const authorized = computed(() => !store.me || store.me.authorized);
+    const authorized = computed(() => store.me.authorized);
 
     const form = ref({ ...blankForm(), username: route.value.query.user || '' });
     const searched = ref('');
