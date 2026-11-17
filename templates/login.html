@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Log in - Global Mass Rollback</title>
+<link rel="icon" href="{{ assets.logo }}" type="image/svg+xml">
+<link rel="stylesheet" href="{{ assets.tokens }}">
+<link rel="stylesheet" href="{{ assets.dark }}" id="gmr-dark" media="not all">
+<script>
+try { if (localStorage.getItem('gmr-theme') === 'dark') { document.documentElement.dataset.theme = 'dark'; document.getElementById('gmr-dark').media = 'all'; } } catch (e) {}
+// where to go after login
+try { if (location.hash && location.hash !== '#/') sessionStorage.setItem('gmr-after-login', location.hash); } catch (e) {}
+</script>
+<link rel="stylesheet" href="{{ assets.codex_css }}">
+<link rel="stylesheet" href="css/login.css?v={{ v }}">
+<script type="importmap">
+{"imports": {"vue": {{ assets.vue|tojson }}, "@wikimedia/codex": {{ assets.codex|tojson }}, "@wikimedia/codex-icons": {{ assets.icons|tojson }}}}
+</script>
+</head>
+<body>
+<div id="app" data-logo="{{ assets.logo }}" data-login-url="{{ login_url }}" data-enabled="{{ 'yes' if login_enabled else 'no' }}" data-source="{{ source }}" data-commit="{{ commit }}"></div>
+<script type="module" src="js/login.js?v={{ v }}"></script>
+</body>
+</html>
