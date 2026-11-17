@@ -55,7 +55,6 @@ export const RollbackPage = {
     function sendFilters(src = form.value) {
       const { username, limit, ...f } = src;
       if (f.namespace === 'any') f.namespace = '';
-      if (f.kind === 'any') f.kind = '';
       return f;
     }
 
