@@ -1,5 +1,5 @@
 // app shell: header, router, footer. layout from gs-steward-stats
-import { computed, createApp, onMounted } from 'vue';
+import { computed, createApp } from 'vue';
 import { get } from './api.js';
 import { CdxButton, CdxIcon, CdxProgressIndicator, CdxTooltip, icons } from './codex.js';
 import { route, store, theme, toggleTheme } from './store.js';
@@ -13,8 +13,13 @@ try {
   if (h) { sessionStorage.removeItem('gmr-after-login'); if (!location.hash || location.hash === '#/') location.hash = h; }
 } catch (e) {}
 
+// from the page itself, the api check below only refreshes it
+const el = document.getElementById('app');
+store.me = { username: el.dataset.username || null, authorized: el.dataset.authorized === 'yes' };
+
 async function loadMe() {
-  try { store.me = await get('me'); } catch (e) { store.me = store.me || { username: null, authorized: false }; }
+  // a failed check keeps what we have, it never logs you out on screen
+  try { const d = await get('me'); if (d && d.username) store.me = d; } catch (e) {}
 }
 // keeps the online status fresh
 setInterval(() => { if (document.visibilityState === 'visible') loadMe(); }, 2 * 60 * 1000);
@@ -22,7 +27,6 @@ setInterval(() => { if (document.visibilityState === 'visible') loadMe(); }, 2 *
 const App = {
   components: { RollbackPage, StatsPage, CdxButton, CdxIcon, SiteFooter },
   setup() {
-    onMounted(loadMe);
     const nav = [['rollback', 'Rollback', icons.undo], ['stats', 'Statistics', icons.chart]];
     const current = computed(() => route.value.name);
     const { logo, source, commit } = document.getElementById('app').dataset;
