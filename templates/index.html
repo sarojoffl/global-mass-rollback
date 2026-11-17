@@ -19,7 +19,7 @@ try { if (localStorage.getItem('gmr-theme') === 'dark') { document.documentEleme
 </script>
 </head>
 <body>
-<div id="app" data-logo="{{ assets.logo }}" data-source="{{ source }}" data-commit="{{ commit }}">
+<div id="app" data-logo="{{ assets.logo }}" data-source="{{ source }}" data-commit="{{ commit }}" data-username="{{ me or '' }}" data-authorized="{{ 'yes' if authorized else 'no' }}">
   <div class="boot"><div class="cdx-progress-indicator"><div class="cdx-progress-indicator__indicator"><progress class="cdx-progress-indicator__indicator__progress" aria-label="Loading"></progress></div></div></div>
 </div>
 <script type="module" src="js/main.js?v={{ v }}"></script>
