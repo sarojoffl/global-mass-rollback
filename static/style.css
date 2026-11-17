@@ -54,44 +54,45 @@ main {
   padding: 0 16px;
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 12px;
   min-height: 56px;
 }
 .brand {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 8px;
   color: var(--color-base, #202122);
   font-weight: 700;
   font-size: 1.125rem;
-  flex: 1;
-  min-width: 0;
+  text-decoration: none;
+  flex-shrink: 0;
 }
 .brand:hover { text-decoration: none; }
 .brand img { flex-shrink: 0; border-radius: 2px; }
 .brand-title {
-  overflow: hidden;
-  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.acct {
-  display: flex;
+.hdr-right {
+  display: inline-flex;
   align-items: center;
   gap: 8px;
-  font-size: .875rem;
   flex-shrink: 0;
+}
+.acct {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.875rem;
 }
 .acct .who {
   font-weight: 700;
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 5px;
-  max-width: 160px;
+  gap: 4px;
 }
 .acct .who-name {
-  overflow: hidden;
-  text-overflow: ellipsis;
   white-space: nowrap;
 }
 .logout-btn {
@@ -101,13 +102,13 @@ main {
 }
 
 .themesw {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   flex-shrink: 0;
 }
 .themesw .cdx-button {
-  min-width: 40px;
-  min-height: 40px;
+  min-width: 38px;
+  min-height: 38px;
   padding: 0;
 }
 
@@ -143,7 +144,10 @@ main {
   padding: 16px;
   margin-bottom: 16px;
 }
-.panel.p0 { padding: 0; }
+.panel.p0 {
+  padding: 0;
+  overflow: hidden;
+}
 .panelhead {
   display: flex;
   justify-content: space-between;
@@ -159,13 +163,17 @@ main {
 /* ── Search row ─────────────────────────────────────────────────────── */
 .search-row {
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   gap: 8px;
   margin-bottom: 12px;
-  flex-wrap: wrap;
 }
-.search-field { flex: 1 1 240px; min-width: 0; }
+.search-field {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+}
 .search-field .cdx-text-input { width: 100%; }
+.search-row .cdx-button { flex-shrink: 0; }
 
 /* ── Loading / empty states ─────────────────────────────────────────── */
 .loading {
@@ -178,13 +186,14 @@ main {
 }
 .mt { margin-top: 12px; }
 
-/* ── Table (Desktop default) ───────────────────────────────────────── */
+/* ── Table (Universal Wikimedia Tabular View) ───────────────────────── */
 .table-wrap {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
 }
 .gmr-table {
   width: 100%;
+  min-width: 720px; /* guarantees columns stay beautifully aligned and never wrap chaotically */
   border-collapse: collapse;
   font-size: var(--font-size-small, .875rem);
 }
@@ -203,6 +212,9 @@ main {
 }
 .gmr-table tbody tr:hover {
   background: var(--background-color-neutral-subtle, #f8f9fa);
+}
+.gmr-table tbody tr:last-child td {
+  border-bottom: none;
 }
 
 /* Column styles */
@@ -273,199 +285,75 @@ main {
 .footer p { margin: 2px 0; }
 
 /* ============================================================
-   Responsive Adaptations (Tablet & Mobile)
+   Mobile & Compact Viewport Optimizations
    ============================================================ */
 
-/* ── Tablet & Mobile (<= 768px): Card-based Edit List ─────── */
-@media (max-width: 768px) {
-  .table-wrap {
-    overflow-x: visible;
-  }
-  .gmr-table {
-    display: block;
-    border: none;
-  }
-  .gmr-table thead {
-    display: none; /* Hide traditional tabular headers */
-  }
-  .gmr-table tbody {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    padding: 12px;
-  }
-  .gmr-table tbody tr.gmr-row {
-    display: grid;
-    grid-template-columns: 1fr auto;
-    grid-template-areas:
-      "wiki status"
-      "page page"
-      "comment comment"
-      "date size"
-      "actions actions";
-    gap: 6px 10px;
-    padding: 12px;
-    background: var(--background-color-base, #fff);
-    border: 1px solid var(--border-color-subtle, #c8ccd1);
-    border-radius: var(--border-radius-base, 2px);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
-  }
-  .gmr-table tbody tr.gmr-row:hover {
-    background: var(--background-color-base, #fff);
-  }
-
-  /* Grid cell mapping on mobile */
-  .col-wiki {
-    grid-area: wiki;
-    padding: 0;
-    border: none;
-    display: flex;
-    align-items: center;
-  }
-  .col-status {
-    grid-area: status;
-    justify-self: end;
-    align-self: center;
-    padding: 0;
-    border: none;
-  }
-  .col-page {
-    grid-area: page;
-    padding: 0;
-    border: none;
-    font-size: 0.95rem;
-    word-break: break-word;
-    line-height: 1.4;
-  }
-  .col-comment {
-    grid-area: comment;
-    padding: 0;
-    border: none;
-    max-width: none;
-    white-space: normal;
-    word-break: break-word;
-    font-size: 0.8125rem;
-    color: var(--color-subtle, #54595d);
-    line-height: 1.4;
-  }
-  .col-comment:empty {
-    display: none;
-  }
-  .col-date {
-    grid-area: date;
-    padding: 0;
-    border: none;
-    font-size: 0.78rem;
-    color: var(--color-subtle, #54595d);
-    align-self: center;
-  }
-  .col-size {
-    grid-area: size;
-    justify-self: end;
-    padding: 0;
-    border: none;
-    font-size: 0.8125rem;
-    align-self: center;
-  }
-  .col-actions {
-    grid-area: actions;
-    display: flex;
-    gap: 8px;
-    padding: 8px 0 0 0;
-    margin-top: 4px;
-    border: none;
-    border-top: 1px dashed var(--border-color-subtle, #c8ccd1);
-  }
-  .col-actions .cdx-button {
-    flex: 1;
-    justify-content: center;
-    margin: 0;
-    min-height: 32px;
-  }
-
-  /* Panel header action buttons on mobile */
-  .panelhead {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 10px;
-  }
-  .actions-row {
-    width: 100%;
-    display: flex;
-    gap: 8px;
-  }
-  .actions-row .cdx-button {
-    flex: 1;
-    justify-content: center;
-    min-height: 36px;
-  }
-}
-
-/* ── Mobile Phones (<= 600px): Header & Search ─────────────── */
 @media (max-width: 600px) {
   main {
-    padding: 16px 12px 36px;
+    padding: 16px 12px 32px;
   }
   .hdr-in {
-    padding: 0 12px;
-    gap: 8px;
+    padding: 0 10px;
+    gap: 6px;
     min-height: 50px;
   }
   .brand {
-    font-size: 1rem;
+    font-size: 0.95rem;
     gap: 6px;
   }
   .brand img {
     width: 24px;
     height: 24px;
   }
+  .hdr-right {
+    gap: 4px;
+  }
   .acct {
-    gap: 6px;
+    gap: 4px;
     font-size: 0.8125rem;
   }
-  .acct .who {
-    max-width: 95px;
+  .acct .who-name {
+    max-width: 70px;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
-  /* On compact screens, hide text label to keep logout button compact */
   .logout-label {
-    display: none;
+    display: none; /* Show icon only on phones */
   }
   .logout-btn {
     padding: 6px 8px;
-    min-width: 36px;
+    min-width: 34px;
+    min-height: 34px;
   }
   .themesw .cdx-button {
-    min-width: 36px;
-    min-height: 36px;
+    min-width: 34px;
+    min-height: 34px;
   }
-
-  /* Search row stacked */
-  .search-row {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 10px;
+  .panel {
+    padding: 12px;
   }
-  .search-field {
-    width: 100%;
+  .panelhead {
+    padding: 10px 12px;
   }
-  .search-row .cdx-button {
-    width: 100%;
-    justify-content: center;
-    min-height: 38px;
+  .gmr-table th,
+  .gmr-table td {
+    padding: 6px 8px;
+    font-size: 0.8125rem;
   }
 }
 
-/* ── Small Mobile (<= 480px): Login Card ───────────────────── */
-@media (max-width: 480px) {
+@media (max-width: 380px) {
+  .brand-title {
+    font-size: 0.875rem;
+  }
+  .acct .who-name {
+    display: none; /* Icon-only on very tiny screens */
+  }
   .login-card {
     margin: 24px auto;
     padding: 24px 16px;
-    box-shadow: none;
   }
   .login-title {
     font-size: 1.25rem;
-  }
-  .brand-title {
-    font-size: 0.95rem;
   }
 }

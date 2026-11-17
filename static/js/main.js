@@ -208,22 +208,24 @@ const App = {
         <img :src="logo" alt="" width="28" height="28">
         <span class="brand-title">Global Mass Rollback</span>
       </a>
-      <div class="acct" v-if="loggedIn">
-        <span class="who" :title="'Logged in as ' + username">
-          <cdx-icon :icon="icons.user" size="small"/>
-          <span class="who-name">{{ username }}</span>
-        </span>
-        <a class="cdx-button cdx-button--fake-button cdx-button--fake-button--enabled cdx-button--weight-quiet cdx-button--size-medium logout-btn" href="/logout" title="Log out" aria-label="Log out">
-          <cdx-icon :icon="icons.logOut"/>
-          <span class="logout-label">Log out</span>
-        </a>
-      </div>
-      <div class="themesw">
-        <cdx-button weight="quiet"
-          :aria-label="theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'"
-          @click="toggleTheme">
-          <cdx-icon :icon="theme === 'dark' ? icons.sun : icons.moon"/>
-        </cdx-button>
+      <div class="hdr-right">
+        <div class="acct" v-if="loggedIn">
+          <span class="who" :title="'Logged in as ' + username">
+            <cdx-icon :icon="icons.user" size="small"/>
+            <span class="who-name">{{ username }}</span>
+          </span>
+          <a class="cdx-button cdx-button--fake-button cdx-button--fake-button--enabled cdx-button--weight-quiet cdx-button--size-medium logout-btn" href="/logout" title="Log out" aria-label="Log out">
+            <cdx-icon :icon="icons.logOut"/>
+            <span class="logout-label">Log out</span>
+          </a>
+        </div>
+        <div class="themesw">
+          <cdx-button weight="quiet"
+            :aria-label="theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'"
+            @click="toggleTheme">
+            <cdx-icon :icon="theme === 'dark' ? icons.sun : icons.moon"/>
+          </cdx-button>
+        </div>
       </div>
     </div>
   </header>
