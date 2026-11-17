@@ -91,10 +91,6 @@ def text_match(edit, f):
         return False
     if f.get("title") and f["title"].lower() not in (edit.get("title") or "").lower():
         return False
-    if f.get("min_size") is not None and (edit.get("sizediff") or 0) < f["min_size"]:
-        return False
-    if f.get("max_size") is not None and (edit.get("sizediff") or 0) > f["max_size"]:
-        return False
     return True
 
 
