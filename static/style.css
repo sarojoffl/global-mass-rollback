@@ -1,6 +1,6 @@
 /* ============================================================
-   Global Mass Rollback – layout & local styles
-   Colours, borders and typography come from Codex design tokens.
+   Global Mass Rollback – Layout & Codex Styling
+   Colours, borders, spacing and typography follow Wikimedia Codex design tokens.
    ============================================================ */
 
 :root { color-scheme: light; }
@@ -11,9 +11,10 @@ html, body { min-height: 100%; margin: 0; }
 body {
   background: var(--background-color-neutral-subtle, #f8f9fa);
   color: var(--color-base, #202122);
-  font-family: var(--font-family-system-sans, system-ui, sans-serif);
+  font-family: var(--font-family-system-sans, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
   font-size: var(--font-size-medium, 1rem);
   line-height: 1.5;
+  -webkit-text-size-adjust: 100%;
 }
 
 a { color: var(--color-progressive, #36c); text-decoration: none; }
@@ -31,44 +32,104 @@ a:hover { text-decoration: underline; }
 /* ── App shell ──────────────────────────────────────────────────────── */
 #app { min-height: 100vh; display: flex; flex-direction: column; }
 .shell { flex: 1 0 auto; display: flex; flex-direction: column; }
-main { flex: 1 0 auto; width: 100%; max-width: 1200px; margin: 0 auto; padding: 24px 16px 48px; }
+main {
+  flex: 1 0 auto;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px 16px 48px;
+}
 
 /* ── Header ─────────────────────────────────────────────────────────── */
 .hdr {
   background: var(--background-color-base, #fff);
   border-bottom: 1px solid var(--border-color-base, #a2a9b1);
-  position: sticky; top: 0; z-index: 30;
+  position: sticky;
+  top: 0;
+  z-index: 30;
 }
 .hdr-in {
-  max-width: 1200px; margin: 0 auto; padding: 0 16px;
-  display: flex; align-items: center; gap: 12px; min-height: 56px;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 56px;
 }
 .brand {
-  display: flex; align-items: center; gap: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
   color: var(--color-base, #202122);
-  font-weight: 700; font-size: 1.125rem;
+  font-weight: 700;
+  font-size: 1.125rem;
   flex: 1;
+  min-width: 0;
 }
 .brand:hover { text-decoration: none; }
-.brand img { border-radius: 2px; }
-.acct { display: flex; align-items: center; gap: 8px; font-size: .875rem; }
-.acct .who { font-weight: 700; display: flex; align-items: center; gap: 5px; }
-.themesw { display: flex; align-items: center; }
-.themesw .cdx-button { min-width: 40px; min-height: 40px; padding: 0; }
+.brand img { flex-shrink: 0; border-radius: 2px; }
+.brand-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.acct {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: .875rem;
+  flex-shrink: 0;
+}
+.acct .who {
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  max-width: 160px;
+}
+.acct .who-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.logout-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.themesw {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+.themesw .cdx-button {
+  min-width: 40px;
+  min-height: 40px;
+  padding: 0;
+}
 
 /* ── Login card ─────────────────────────────────────────────────────── */
 .login-card {
-  max-width: 420px; margin: 80px auto; padding: 40px 32px;
+  max-width: 420px;
+  margin: 64px auto;
+  padding: 40px 32px;
   background: var(--background-color-base, #fff);
   border: 1px solid var(--border-color-subtle, #c8ccd1);
   border-radius: var(--border-radius-base, 2px);
   text-align: center;
-  box-shadow: 0 2px 8px rgba(0,0,0,.08);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 .login-logo { margin-bottom: 16px; }
-.login-title { font-size: 1.5rem; margin: 0 0 8px; }
+.login-title { font-size: 1.5rem; margin: 0 0 8px; font-weight: 700; }
 .login-sub { color: var(--color-subtle, #54595d); margin: 0 0 24px; }
-.login-btn { width: 100%; justify-content: center; text-decoration: none !important; }
+.login-btn {
+  width: 100%;
+  justify-content: center;
+  text-decoration: none !important;
+}
 .login-btn:hover { text-decoration: none !important; }
 
 /* ── Auth error ─────────────────────────────────────────────────────── */
@@ -84,33 +145,47 @@ main { flex: 1 0 auto; width: 100%; max-width: 1200px; margin: 0 auto; padding: 
 }
 .panel.p0 { padding: 0; }
 .panelhead {
-  display: flex; justify-content: space-between; align-items: center;
-  gap: 12px; flex-wrap: wrap;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
   padding: 12px 16px;
   border-bottom: 1px solid var(--border-color-subtle, #c8ccd1);
 }
-.panelhead h2 { font-size: 1rem; margin: 0; }
+.panelhead h2 { font-size: 1.05rem; margin: 0; font-weight: 700; }
 .actions-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 
 /* ── Search row ─────────────────────────────────────────────────────── */
 .search-row {
-  display: flex; align-items: flex-end; gap: 8px; margin-bottom: 12px; flex-wrap: wrap;
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
 }
 .search-field { flex: 1 1 240px; min-width: 0; }
 .search-field .cdx-text-input { width: 100%; }
 
 /* ── Loading / empty states ─────────────────────────────────────────── */
 .loading {
-  display: flex; align-items: center; gap: 10px;
-  padding: 32px; justify-content: center;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 32px 16px;
+  justify-content: center;
   color: var(--color-subtle, #54595d);
 }
-.mt { margin-top: 8px; }
+.mt { margin-top: 12px; }
 
-/* ── Table ──────────────────────────────────────────────────────────── */
-.table-wrap { overflow-x: auto; }
+/* ── Table (Desktop default) ───────────────────────────────────────── */
+.table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
 .gmr-table {
-  width: 100%; border-collapse: collapse;
+  width: 100%;
+  border-collapse: collapse;
   font-size: var(--font-size-small, .875rem);
 }
 .gmr-table th,
@@ -130,20 +205,45 @@ main { flex: 1 0 auto; width: 100%; max-width: 1200px; margin: 0 auto; padding: 
   background: var(--background-color-neutral-subtle, #f8f9fa);
 }
 
-/* column helpers */
-.ts   { color: var(--color-subtle, #54595d); font-variant-numeric: tabular-nums; }
-.nw   { white-space: nowrap; }
-.cmt  { color: var(--color-subtle, #54595d); font-style: italic; max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Column styles */
+.ts { color: var(--color-subtle, #54595d); font-variant-numeric: tabular-nums; }
+.nw { white-space: nowrap; }
+.wiki-tag {
+  display: inline-block;
+  padding: 1px 5px;
+  font-family: var(--font-family-monospace, monospace);
+  font-size: 0.8125rem;
+  background: var(--background-color-neutral, #eaecf0);
+  border-radius: 2px;
+}
+.page-link {
+  color: var(--color-base, #202122);
+  font-weight: 600;
+  text-decoration: none;
+}
+.page-link:hover {
+  color: var(--color-progressive, #36c);
+  text-decoration: underline;
+}
+.cmt {
+  color: var(--color-subtle, #54595d);
+  font-style: italic;
+  max-width: 320px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 
-/* size diff colouring */
+/* Size diff styling */
 .size-add  { color: var(--color-success, #177860); font-weight: 700; font-variant-numeric: tabular-nums; }
 .size-rm   { color: var(--color-destructive, #bf3c2c); font-weight: 700; font-variant-numeric: tabular-nums; }
 .size-zero { color: var(--color-subtle, #54595d); font-variant-numeric: tabular-nums; }
 
 /* ── Status tags ────────────────────────────────────────────────────── */
-/* Outlined outlined tags — mirrors gs-steward-stats .gs-tag pattern */
 .gs-tag {
-  display: inline-flex; align-items: center; gap: 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   padding: 1px 6px;
   border: 1px solid var(--border-color-base, #a2a9b1);
   color: var(--color-base, #202122);
@@ -151,12 +251,13 @@ main { flex: 1 0 auto; width: 100%; max-width: 1200px; margin: 0 auto; padding: 
   line-height: 1.5;
   white-space: nowrap;
   vertical-align: middle;
+  border-radius: var(--border-radius-base, 2px);
 }
 .gs-tag.is-success     { border-color: var(--border-color-success, #099979);    color: var(--color-success, #177860); }
 .gs-tag.is-error       { border-color: var(--border-color-error, #f54739);      color: var(--color-error, #bf3c2c); }
 .gs-tag.is-progressive { border-color: var(--border-color-progressive, #36c);  color: var(--color-progressive, #36c); }
 
-/* action link buttons in table */
+/* Action buttons in table */
 .gmr-table .cdx-button { margin-right: 4px; }
 
 /* ── Footer ─────────────────────────────────────────────────────────── */
@@ -164,16 +265,207 @@ main { flex: 1 0 auto; width: 100%; max-width: 1200px; margin: 0 auto; padding: 
   margin-top: auto;
   border-top: 1px solid var(--border-color-subtle, #c8ccd1);
   background: var(--background-color-base, #fff);
-  padding: 20px 16px;
+  padding: 20px 16px calc(20px + env(safe-area-inset-bottom, 0px));
   text-align: center;
   color: var(--color-subtle, #54595d);
   font-size: .875rem;
 }
 .footer p { margin: 2px 0; }
 
-/* ── Responsive ─────────────────────────────────────────────────────── */
+/* ============================================================
+   Responsive Adaptations (Tablet & Mobile)
+   ============================================================ */
+
+/* ── Tablet & Mobile (<= 768px): Card-based Edit List ─────── */
+@media (max-width: 768px) {
+  .table-wrap {
+    overflow-x: visible;
+  }
+  .gmr-table {
+    display: block;
+    border: none;
+  }
+  .gmr-table thead {
+    display: none; /* Hide traditional tabular headers */
+  }
+  .gmr-table tbody {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 12px;
+  }
+  .gmr-table tbody tr.gmr-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+      "wiki status"
+      "page page"
+      "comment comment"
+      "date size"
+      "actions actions";
+    gap: 6px 10px;
+    padding: 12px;
+    background: var(--background-color-base, #fff);
+    border: 1px solid var(--border-color-subtle, #c8ccd1);
+    border-radius: var(--border-radius-base, 2px);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  }
+  .gmr-table tbody tr.gmr-row:hover {
+    background: var(--background-color-base, #fff);
+  }
+
+  /* Grid cell mapping on mobile */
+  .col-wiki {
+    grid-area: wiki;
+    padding: 0;
+    border: none;
+    display: flex;
+    align-items: center;
+  }
+  .col-status {
+    grid-area: status;
+    justify-self: end;
+    align-self: center;
+    padding: 0;
+    border: none;
+  }
+  .col-page {
+    grid-area: page;
+    padding: 0;
+    border: none;
+    font-size: 0.95rem;
+    word-break: break-word;
+    line-height: 1.4;
+  }
+  .col-comment {
+    grid-area: comment;
+    padding: 0;
+    border: none;
+    max-width: none;
+    white-space: normal;
+    word-break: break-word;
+    font-size: 0.8125rem;
+    color: var(--color-subtle, #54595d);
+    line-height: 1.4;
+  }
+  .col-comment:empty {
+    display: none;
+  }
+  .col-date {
+    grid-area: date;
+    padding: 0;
+    border: none;
+    font-size: 0.78rem;
+    color: var(--color-subtle, #54595d);
+    align-self: center;
+  }
+  .col-size {
+    grid-area: size;
+    justify-self: end;
+    padding: 0;
+    border: none;
+    font-size: 0.8125rem;
+    align-self: center;
+  }
+  .col-actions {
+    grid-area: actions;
+    display: flex;
+    gap: 8px;
+    padding: 8px 0 0 0;
+    margin-top: 4px;
+    border: none;
+    border-top: 1px dashed var(--border-color-subtle, #c8ccd1);
+  }
+  .col-actions .cdx-button {
+    flex: 1;
+    justify-content: center;
+    margin: 0;
+    min-height: 32px;
+  }
+
+  /* Panel header action buttons on mobile */
+  .panelhead {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+  .actions-row {
+    width: 100%;
+    display: flex;
+    gap: 8px;
+  }
+  .actions-row .cdx-button {
+    flex: 1;
+    justify-content: center;
+    min-height: 36px;
+  }
+}
+
+/* ── Mobile Phones (<= 600px): Header & Search ─────────────── */
 @media (max-width: 600px) {
-  .search-row { flex-direction: column; align-items: stretch; }
-  .search-row .cdx-button { width: 100%; justify-content: center; }
-  .cmt { max-width: 180px; }
+  main {
+    padding: 16px 12px 36px;
+  }
+  .hdr-in {
+    padding: 0 12px;
+    gap: 8px;
+    min-height: 50px;
+  }
+  .brand {
+    font-size: 1rem;
+    gap: 6px;
+  }
+  .brand img {
+    width: 24px;
+    height: 24px;
+  }
+  .acct {
+    gap: 6px;
+    font-size: 0.8125rem;
+  }
+  .acct .who {
+    max-width: 95px;
+  }
+  /* On compact screens, hide text label to keep logout button compact */
+  .logout-label {
+    display: none;
+  }
+  .logout-btn {
+    padding: 6px 8px;
+    min-width: 36px;
+  }
+  .themesw .cdx-button {
+    min-width: 36px;
+    min-height: 36px;
+  }
+
+  /* Search row stacked */
+  .search-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+  .search-field {
+    width: 100%;
+  }
+  .search-row .cdx-button {
+    width: 100%;
+    justify-content: center;
+    min-height: 38px;
+  }
+}
+
+/* ── Small Mobile (<= 480px): Login Card ───────────────────── */
+@media (max-width: 480px) {
+  .login-card {
+    margin: 24px auto;
+    padding: 24px 16px;
+    box-shadow: none;
+  }
+  .login-title {
+    font-size: 1.25rem;
+  }
+  .brand-title {
+    font-size: 0.95rem;
+  }
 }

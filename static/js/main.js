@@ -32,6 +32,7 @@ function getWikiDomain(wiki) {
 
 function getDiffUrl(wiki, revid)  { return `https://${getWikiDomain(wiki)}/w/index.php?diff=${revid}`; }
 function getHistUrl(wiki, title)  { return `https://${getWikiDomain(wiki)}/w/index.php?title=${encodeURIComponent(title)}&action=history`; }
+function getPageUrl(wiki, title)  { return `https://${getWikiDomain(wiki)}/wiki/${encodeURIComponent((title || '').replace(/ /g, '_'))}`; }
 
 // ── App ───────────────────────────────────────────────────────────────────────
 const App = {
@@ -192,7 +193,7 @@ const App = {
       rollbackStatus, isRollingBack, rollbackDone, confirmOpen,
       search, loadMore, openConfirm, rollbackAll,
       fmtDiff, diffClass,
-      getDiffUrl, getHistUrl,
+      getPageUrl, getDiffUrl, getHistUrl,
       icons,
     };
   },
@@ -205,13 +206,16 @@ const App = {
     <div class="hdr-in">
       <a class="brand" href="#">
         <img :src="logo" alt="" width="28" height="28">
-        Global Mass Rollback
+        <span class="brand-title">Global Mass Rollback</span>
       </a>
       <div class="acct" v-if="loggedIn">
-        <cdx-icon :icon="icons.user" size="small"/>
-        <span class="who">{{ username }}</span>
-        <a class="cdx-button cdx-button--fake-button cdx-button--fake-button--enabled cdx-button--weight-quiet cdx-button--size-medium" href="/logout">
-          <cdx-icon :icon="icons.logOut"/> Log out
+        <span class="who" :title="'Logged in as ' + username">
+          <cdx-icon :icon="icons.user" size="small"/>
+          <span class="who-name">{{ username }}</span>
+        </span>
+        <a class="cdx-button cdx-button--fake-button cdx-button--fake-button--enabled cdx-button--weight-quiet cdx-button--size-medium logout-btn" href="/logout" title="Log out" aria-label="Log out">
+          <cdx-icon :icon="icons.logOut"/>
+          <span class="logout-label">Log out</span>
         </a>
       </div>
       <div class="themesw">
@@ -330,13 +334,17 @@ const App = {
               </tr>
             </thead>
             <tbody>
-              <tr v-for="edit in edits" :key="edit.revid">
-                <td class="ts nw">{{ edit.timestamp }}</td>
-                <td class="nw">{{ edit.wiki }}</td>
-                <td>{{ edit.title }}</td>
-                <td class="cmt">{{ edit.comment || '' }}</td>
-                <td class="nw" :class="diffClass(edit.sizediff)">{{ fmtDiff(edit.sizediff) }}</td>
-                <td class="nw">
+              <tr v-for="edit in edits" :key="edit.revid" class="gmr-row">
+                <td class="col-date ts nw" data-label="Date">{{ edit.timestamp }}</td>
+                <td class="col-wiki nw" data-label="Project"><span class="wiki-tag">{{ edit.wiki }}</span></td>
+                <td class="col-page" data-label="Page">
+                  <a :href="getPageUrl(edit.wiki, edit.title)" target="_blank" class="page-link" rel="noopener">
+                    {{ edit.title }}
+                  </a>
+                </td>
+                <td class="col-comment cmt" data-label="Summary">{{ edit.comment || '' }}</td>
+                <td class="col-size nw" data-label="Size" :class="diffClass(edit.sizediff)">{{ fmtDiff(edit.sizediff) }}</td>
+                <td class="col-status nw" data-label="Status">
                   <span v-if="rollbackStatus[edit.revid]">
                     <span v-if="rollbackStatus[edit.revid].status === 'pending'"
                           class="gs-tag">Pending</span>
@@ -352,11 +360,11 @@ const App = {
                     </span>
                   </span>
                 </td>
-                <td class="nw">
-                  <a :href="getDiffUrl(edit.wiki, edit.revid)" target="_blank" class="cdx-button cdx-button--fake-button cdx-button--fake-button--enabled cdx-button--weight-quiet cdx-button--size-small">
+                <td class="col-actions nw" data-label="Actions">
+                  <a :href="getDiffUrl(edit.wiki, edit.revid)" target="_blank" class="cdx-button cdx-button--fake-button cdx-button--fake-button--enabled cdx-button--weight-quiet cdx-button--size-small" rel="noopener">
                     <cdx-icon :icon="icons.ext" size="small"/> Diff
                   </a>
-                  <a :href="getHistUrl(edit.wiki, edit.title)" target="_blank" class="cdx-button cdx-button--fake-button cdx-button--fake-button--enabled cdx-button--weight-quiet cdx-button--size-small">
+                  <a :href="getHistUrl(edit.wiki, edit.title)" target="_blank" class="cdx-button cdx-button--fake-button cdx-button--fake-button--enabled cdx-button--weight-quiet cdx-button--size-small" rel="noopener">
                     <cdx-icon :icon="icons.clock" size="small"/> Hist
                   </a>
                 </td>
