@@ -1,1 +1,1 @@
-web: gunicorn --workers=4 --bind=0.0.0.0 --forwarded-allow-ips=* app:app
+web: gunicorn --bind 0.0.0.0:8000 --workers 1 --threads 8 --timeout 120 --forwarded-allow-ips=* app:app
