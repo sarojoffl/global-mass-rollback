@@ -9,10 +9,12 @@ import requests
 
 meta_api = "https://meta.wikimedia.org/w/api.php"
 allowed_groups = ("global-rollbacker", "steward", "global-sysop")
-fetch_threads = 4
+# wikis asked at once per search, it is mostly waiting on the network
+fetch_threads = 16
 timeout = 15
 
 http = requests.Session()
+http.mount("https://", requests.adapters.HTTPAdapter(pool_connections=64, pool_maxsize=fetch_threads))
 http.headers.update({"User-Agent": "GlobalMassRollback (https://meta.wikimedia.org/wiki/User:Saroj)"})
 
 def get_json(url, params):
