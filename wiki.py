@@ -81,7 +81,9 @@ def merged_accounts(username):
     info = d.get("query", {}).get("globaluserinfo", {})
     if info.get("missing"):
         return None
-    return [m for m in info.get("merged", []) if m.get("editcount", 0) > 0]
+    # drop projects with 0 edits, then most edits first
+    found = [m for m in info.get("merged", []) if m.get("editcount", 0) > 0]
+    return sorted(found, key=lambda m: -m["editcount"])
 
 
 def text_match(edit, f):
@@ -147,8 +149,6 @@ def contribs(username, f, limit, conts=None):
         accounts = [a for a in accounts if a["wiki"] in wanted]
     if conts:
         accounts = [a for a in accounts if a["wiki"] in conts]
-    # busiest projects first, they're most likely to have the newest edits
-    accounts.sort(key=lambda a: -a.get("editcount", 0))
 
     # stop asking new projects once we have this many edits, load more does the rest
     enough = max(stop_after, limit)
