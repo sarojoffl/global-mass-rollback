@@ -59,7 +59,7 @@ def change(fn):
             if os.path.exists(path):
                 os.replace(path, path + ".bak")
             os.replace(path + ".tmp", path)
-    except OSError as e:
+    except Exception as e:
         print("could not save stats:", e)
 
 
@@ -74,7 +74,8 @@ def seen(name, force=False):
         if not force and time.time() - last_write.get(name, 0) < seen_gap:
             return
         last_write[name] = time.time()
-    change(lambda data: user(data, name).update(last_seen=now()))
+    # in the background, so a slow shared disk never holds up a page
+    threading.Thread(target=change, args=(lambda data: user(data, name).update(last_seen=now()),), daemon=True).start()
 
 
 def rolled_back(name, ok):
@@ -86,8 +87,7 @@ def rolled_back(name, ok):
 
 
 def summary():
-    with lock:
-        data = read()
+    data = read()
     users = [{**u, "name": n, "online": age(u.get("last_seen")) < online_window} for n, u in data["users"].items()]
     users.sort(key=lambda u: (not u["online"], age(u.get("last_seen"))))
     return {
