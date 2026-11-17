@@ -78,7 +78,7 @@ export const SearchForm = {
   template: `
 <div>
   <div class="filters" :class="{ open: more }">
-    <cdx-field class="wide"><template #label>Username</template>
+    <cdx-field class="full"><template #label>Username</template>
       <cdx-lookup v-model:selected="userPick" :input-value="f.username" @update:input-value="set('username', $event)" :menu-items="userItems" :menu-config="{ visibleItemLimit: 8 }"
         :start-icon="icons.user" placeholder="Username" :disabled="disabled" @input="onUserInput" @update:selected="onUserPick" @keydown.enter="onEnter"/>
     </cdx-field>
