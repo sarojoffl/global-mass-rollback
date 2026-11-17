@@ -200,7 +200,9 @@ table.diff .mw-diff-movedpara-left, table.diff .mw-diff-movedpara-right { displa
   .rbbar > .grp:first-child { flex-direction: column; align-items: flex-start; gap: 2px; font-size: .875rem; }
   .rbbar > .grp:last-child { flex: 1; justify-content: flex-end; flex-wrap: nowrap; }
   .rbbar .grp .cdx-button { flex: 0 1 auto; }
-  body:has(.rbbar) .footer { padding-bottom: 96px; }
+  /* summary gets its own line on top of the bar */
+  .rbbar .rbsum.mob-only { display: block !important; flex: 1 1 100%; order: -1; }
+  body:has(.rbbar) .footer { padding-bottom: 150px; }
 }
 
 @media (max-width: 600px) {
