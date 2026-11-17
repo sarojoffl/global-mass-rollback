@@ -80,7 +80,7 @@ export const SearchForm = {
   <div class="filters" :class="{ open: more }">
     <cdx-field class="wide"><template #label>Username</template>
       <cdx-lookup v-model:selected="userPick" :input-value="f.username" @update:input-value="set('username', $event)" :menu-items="userItems" :menu-config="{ visibleItemLimit: 8 }"
-        :start-icon="icons.user" placeholder="Username or IP" :disabled="disabled" @input="onUserInput" @update:selected="onUserPick" @keydown.enter="onEnter"/>
+        :start-icon="icons.user" placeholder="Username" :disabled="disabled" @input="onUserInput" @update:selected="onUserPick" @keydown.enter="onEnter"/>
     </cdx-field>
     <cdx-field class="wide"><template #label>Projects</template>
       <cdx-multiselect-lookup v-model:input-chips="chips" :selected="f.wikis" @update:selected="set('wikis', $event)" :menu-items="projectItems"
