@@ -233,9 +233,9 @@ const App = {
         <img :src="logo" alt="Global Mass Rollback" width="64" height="64" class="login-logo">
         <h1 class="login-title">Global Mass Rollback</h1>
         <p class="login-sub">Authenticate with Wikimedia OAuth to use this tool.</p>
-        <cdx-button weight="primary" action="progressive" size="large" class="login-btn" tag="a" href="/login">
+        <a class="cdx-button cdx-button--fake-button cdx-button--fake-button--enabled cdx-button--weight-primary cdx-button--action-progressive cdx-button--size-large login-btn" href="/login">
           <cdx-icon :icon="icons.logIn"/> Login with Wikimedia
-        </cdx-button>
+        </a>
       </div>
     </template>
 
