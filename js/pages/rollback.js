@@ -40,6 +40,8 @@ export const RollbackPage = {
 
     const wikiCount = computed(() => new Set(edits.value.map(e => e.wiki)).size);
     const hasMore = computed(() => Object.keys(next.value).length > 0);
+    // projects not asked yet, "" in next
+    const unchecked = computed(() => Object.values(next.value).filter(v => v === '').length);
     const isDone = e => status[keyOf(e)] && status[keyOf(e)].s === 'success';
     // picked edits in select mode, else all not done
     const targets = computed(() => edits.value.filter(e => !isDone(e) && (!selecting.value || picked.has(keyOf(e)))));
@@ -133,7 +135,7 @@ export const RollbackPage = {
 
     return {
       authorized, form, searched, filtered, loading, loadingMore, err, note,
-      edits, hasMore, wikiCount, status, open, selecting, picked, allPicked, somePicked, markbot, summary, confirmOpen, running, stopAsked,
+      edits, hasMore, unchecked, wikiCount, status, open, selecting, picked, allPicked, somePicked, markbot, summary, confirmOpen, running, stopAsked,
       queue, counts, targets, targetWikis,
       search, loadMore, toggleSelecting, togglePick, pickAll, toggleDiff, askRollback, rollback, retryFailed,
       keyOf, pageUrl, histUrl, diffUrl, contribsUrl, sizeClass, fmtTs, num, plural, signed, icons
@@ -160,7 +162,7 @@ export const RollbackPage = {
       <div class="panelhead">
         <div>
           <h2>Latest edits by <a :href="'https://meta.wikimedia.org/wiki/Special:CentralAuth/' + encodeURIComponent(searched)" target="_blank" rel="noopener">{{ searched }}</a></h2>
-          <p class="sub small">{{ plural(edits.length, 'edit') }} on {{ plural(wikiCount, 'project') }}</p>
+          <p class="sub small">{{ plural(edits.length, 'edit') }} on {{ plural(wikiCount, 'project') }}<template v-if="unchecked"> · {{ plural(unchecked, 'project') }} not checked yet</template></p>
         </div>
         <div class="grp">
           <cdx-toggle-button :model-value="selecting" :disabled="running" @update:model-value="toggleSelecting"><cdx-icon :icon="icons.checkAll"/> Select</cdx-toggle-button>
