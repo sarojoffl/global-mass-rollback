@@ -62,6 +62,7 @@ main { flex: 1 0 auto; width: 100%; max-width: 1200px; margin: 0 auto; padding: 
 /* search form */
 .filters { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px 16px; align-items: end; }
 .filters .wide { grid-column: span 2; }
+.filters .full { grid-column: 1 / -1; }
 .filters > * { min-width: 0; }
 .filters .cdx-field { margin: 0; }
 .filters .cdx-select-vue, .filters .cdx-text-input, .filters .cdx-multiselect-lookup { width: 100%; min-width: 0; max-width: none; }
