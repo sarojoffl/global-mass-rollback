@@ -17,7 +17,7 @@
     } catch (e) {}
   </script>
   <link rel="stylesheet" href="{{ assets.codex_css }}">
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v={{ v }}">
   <script type="importmap">
     {"imports": {"vue": {{ assets.vue | tojson }}, "@wikimedia/codex": {{ assets.codex | tojson }}, "@wikimedia/codex-icons": {{ assets.icons | tojson }}}}
   </script>
@@ -38,7 +38,7 @@
     </div>
   </div>
 </div>
-<script type="module" src="{{ url_for('static', filename='js/main.js') }}"></script>
+<script type="module" src="{{ url_for('static', filename='js/main.js') }}?v={{ v }}"></script>
 <script>
   // If Vue or Codex never load (CDN down, old browser) show a message instead of blank page
   setTimeout(function () {

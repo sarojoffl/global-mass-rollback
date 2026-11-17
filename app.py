@@ -5,6 +5,7 @@ import sys
 import time
 import threading
 import json
+import hashlib
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from flask import Flask, render_template, request, jsonify, session, redirect
@@ -22,6 +23,17 @@ else:
         tomllib = None
 
 app = Flask(__name__, static_folder="static")
+
+def asset_version():
+    """Hash of static files so browsers pick up new CSS/JS immediately without caching stale versions."""
+    static_dir = os.path.join(os.path.dirname(__file__), "static")
+    h = hashlib.sha1()
+    for root, dirs, files in os.walk(static_dir):
+        dirs.sort()
+        for f in sorted(files):
+            with open(os.path.join(root, f), "rb") as fh:
+                h.update(fh.read())
+    return h.hexdigest()[:10]
 
 # ---------------- Config ----------------
 # Try config.toml first (local dev), then fall back to environment variables
@@ -268,6 +280,7 @@ def index():
     return render_template(
         "index.html",
         assets=ASSETS,
+        v=asset_version(),
         logged_in="access_token" in session,
         username=session.get("username"),
         is_authorized=session.get("is_authorized", False)

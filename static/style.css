@@ -166,14 +166,25 @@ main {
   align-items: center;
   gap: 8px;
   margin-bottom: 12px;
+  flex-wrap: nowrap;
 }
-.search-field {
+.search-field,
+.cdx-field.search-field {
   flex: 1 1 auto;
   min-width: 0;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+.search-field .cdx-field__control {
   margin: 0;
+  padding: 0;
 }
 .search-field .cdx-text-input { width: 100%; }
-.search-row .cdx-button { flex-shrink: 0; }
+.search-row .cdx-button {
+  flex-shrink: 0;
+  margin: 0;
+  align-self: center;
+}
 
 /* ── Loading / empty states ─────────────────────────────────────────── */
 .loading {
@@ -331,6 +342,24 @@ main {
   }
   .panel {
     padding: 12px;
+  }
+  /* Stacked search layout on mobile */
+  .search-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+  .search-field,
+  .cdx-field.search-field {
+    width: 100%;
+    flex: 0 0 auto;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  .search-row .cdx-button {
+    width: 100%;
+    justify-content: center;
+    min-height: 38px;
   }
   .panelhead {
     padding: 10px 12px;
