@@ -201,12 +201,6 @@ def clean_filters(raw):
     raw = raw if isinstance(raw, dict) else {}
     date = lambda v: v if isinstance(v, str) and re.fullmatch(r"\d{4}-\d{2}-\d{2}", v) else None
 
-    def num(v):
-        try:
-            return int(v) if v not in (None, "") else None
-        except (TypeError, ValueError):
-            return None
-
     ns = raw.get("namespace")
     return {
         "wikis": [w for w in raw.get("wikis", []) if isinstance(w, str) and re.fullmatch(r"[a-z0-9_]+", w)][:300],
@@ -216,8 +210,6 @@ def clean_filters(raw):
         "namespace": str(ns) if ns not in (None, "") and re.fullmatch(r"-?\d+", str(ns)) else None,
         "from": date(raw.get("from")),
         "to": date(raw.get("to")),
-        "min_size": num(raw.get("min_size")),
-        "max_size": num(raw.get("max_size")),
     }
 
 
