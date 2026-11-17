@@ -1,29 +1,63 @@
 # -*- coding: utf-8 -*-
 
+import os
+import sys
+import time
+import threading
+import json
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
 from flask import Flask, render_template, request, jsonify, session, redirect
 import requests
 import mwoauth
 from requests_oauthlib import OAuth1
-from concurrent.futures import ThreadPoolExecutor, as_completed
-import threading
-import time
-import os
 
-app = Flask(__name__)
+# tomllib is built-in on Python 3.11+; fall back to tomli for older versions
+if sys.version_info >= (3, 11):
+    import tomllib
+else:
+    try:
+        import tomli as tomllib
+    except ImportError:
+        tomllib = None
+
+app = Flask(__name__, static_folder="static")
 
 # ---------------- Config ----------------
-SECRET_KEY = os.environ.get("SECRET_KEY")
-CONSUMER_KEY = os.environ.get("CONSUMER_KEY")
-CONSUMER_SECRET = os.environ.get("CONSUMER_SECRET")
-OAUTH_MWURI = os.environ.get(
-    "OAUTH_MWURI",
-    "https://meta.wikimedia.org/w/index.php"
-)
+# Try config.toml first (local dev), then fall back to environment variables
+_conf = {}
+_config_file = os.path.join(os.path.dirname(__file__), "config.toml")
+if tomllib and os.path.exists(_config_file):
+    with open(_config_file, "rb") as _f:
+        _conf = tomllib.load(_f)
+
+
+def _setting(name, env):
+    """Read a config value: config.toml key (any case) or env var."""
+    return _conf.get(name) or _conf.get(name.upper()) or os.environ.get(env)
+
+
+SECRET_KEY = _setting("secret_key", "SECRET_KEY")
+CONSUMER_KEY = _setting("consumer_key", "CONSUMER_KEY")
+CONSUMER_SECRET = _setting("consumer_secret", "CONSUMER_SECRET")
+OAUTH_MWURI = _setting("oauth_mwuri", "OAUTH_MWURI") or "https://meta.wikimedia.org/w/index.php"
 
 if not SECRET_KEY or not CONSUMER_KEY or not CONSUMER_SECRET:
-    raise RuntimeError("Missing required environment variables")
+    raise RuntimeError("Missing required config: secret_key, consumer_key, consumer_secret")
 
 app.secret_key = SECRET_KEY
+
+# ---------------- Codex / CDN assets ----------------
+_CDN = os.environ.get("GMR_CDN", "https://tools-static.wmflabs.org/cdnjs/ajax/libs")
+ASSETS = {
+    "vue":       os.environ.get("GMR_VUE_URL",       _CDN + "/vue/3.5.44/vue.esm-browser.prod.min.js"),
+    "codex":     os.environ.get("GMR_CODEX_URL",     _CDN + "/codex/2.7.0/codex.min.js"),
+    "icons":     os.environ.get("GMR_ICONS_URL",     _CDN + "/codex-icons/2.7.0/codex-icons.min.js"),
+    "codex_css": os.environ.get("GMR_CODEX_CSS",     _CDN + "/codex/2.7.0/codex.style.css"),
+    "tokens":    os.environ.get("GMR_TOKENS_CSS",    _CDN + "/codex-design-tokens/2.7.0/theme-wikimedia-ui.css"),
+    "dark":      os.environ.get("GMR_DARK_CSS",      _CDN + "/codex-design-tokens/2.7.0/theme-wikimedia-ui-mode-dark.css"),
+    "logo":      "https://upload.wikimedia.org/wikipedia/commons/6/6c/Meta-Wiki_Global_rollback.svg",
+}
 
 # ---------------- Requests session ----------------
 session_requests = requests.Session()
@@ -38,13 +72,14 @@ ROLLBACK_DELAY = 0.5
 REQUEST_TIMEOUT = 10
 
 
+
 # ============================================================
 # OAuth Routes
 # ============================================================
 
 @app.route("/login")
 def login():
-    consumer_token = mwoauth.ConsumerToken(CONSER_KEY := CONSUMER_KEY, CONSUMER_SECRET)
+    consumer_token = mwoauth.ConsumerToken(CONSUMER_KEY, CONSUMER_SECRET)
     try:
         redirect_url, request_token = mwoauth.initiate(OAUTH_MWURI, consumer_token)
         session["request_token"] = dict(zip(request_token._fields, request_token))
@@ -232,6 +267,7 @@ def fetch_global_contribs(username, uccontinue_map=None):
 def index():
     return render_template(
         "index.html",
+        assets=ASSETS,
         logged_in="access_token" in session,
         username=session.get("username"),
         is_authorized=session.get("is_authorized", False)
@@ -246,13 +282,16 @@ def get_global_contribs_route():
     if not session.get("is_authorized"):
         return jsonify({"success": False, "message": "This tool is only for global rollbackers, stewards, and global sysops."})
 
-    username = request.form.get("username")
-    uccontinue_map = request.form.get("uccontinue_map")
-    if uccontinue_map:
-        import json
-        uccontinue_map = json.loads(uccontinue_map)
+    # Accept both JSON body and form-encoded body
+    if request.is_json:
+        body = request.get_json(force=True)
+        username = body.get("username")
+        raw_map = body.get("uccontinue_map", {})
+        uccontinue_map = raw_map if isinstance(raw_map, dict) else json.loads(raw_map)
     else:
-        uccontinue_map = {}
+        username = request.form.get("username")
+        raw_map = request.form.get("uccontinue_map")
+        uccontinue_map = json.loads(raw_map) if raw_map else {}
 
     edits, next_uccontinue_map = fetch_global_contribs(username, uccontinue_map)
 

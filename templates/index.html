@@ -1,106 +1,51 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Global Mass Rollback</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="{{ assets.tokens }}">
+  <link rel="stylesheet" href="{{ assets.dark }}" id="gmr-dark" media="not all">
+  <script>
+    // Apply saved theme before first paint to prevent flash
+    try {
+      if (localStorage.getItem('gmr-theme') === 'dark') {
+        document.documentElement.dataset.theme = 'dark';
+        document.getElementById('gmr-dark').media = 'all';
+      }
+    } catch (e) {}
+  </script>
+  <link rel="stylesheet" href="{{ assets.codex_css }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <script type="importmap">
+    {"imports": {"vue": {{ assets.vue | tojson }}, "@wikimedia/codex": {{ assets.codex | tojson }}, "@wikimedia/codex-icons": {{ assets.icons | tojson }}}}
+  </script>
 </head>
-<body class="d-flex flex-column min-vh-100">
-
-<!-- ================== Navbar ================== -->
-<nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
-  <div class="container-fluid">
-    <a class="navbar-brand" href="#">Global Mass Rollback</a>
-    {% if logged_in %}
-      <div class="d-flex align-items-center">
-        <span class="me-3 text-muted">Logged in as <strong>{{ username }}</strong></span>
-        <a href="/logout" class="btn btn-outline-secondary btn-sm">Logout</a>
+<body>
+<div id="app"
+  data-logo="{{ assets.logo }}"
+  data-logged-in="{{ 'true' if logged_in else 'false' }}"
+  data-username="{{ username or '' }}"
+  data-is-authorized="{{ 'true' if is_authorized else 'false' }}"
+>
+  <!-- Loading state shown before Vue mounts -->
+  <div class="boot">
+    <div class="cdx-progress-indicator">
+      <div class="cdx-progress-indicator__indicator">
+        <progress class="cdx-progress-indicator__indicator__progress" aria-label="Loading"></progress>
       </div>
-    {% endif %}
+    </div>
   </div>
-</nav>
-
-<!-- ================== Main Content ================== -->
-<main class="flex-fill container py-5">
-  {% if not logged_in %}
-    <div class="login-card text-center">
-      <h3 class="mb-3">Welcome!</h3>
-      <p class="text-muted mb-4">Authenticate with Wikimedia OAuth to use the tool.</p>
-      <a href="/login" class="btn btn-gradient btn-lg w-100">Login with Wikimedia</a>
-    </div>
-  {% elif not is_authorized %}
-    <div class="alert alert-danger text-center" role="alert">
-      <strong>Access Denied.</strong> This tool is only available to
-      <strong>global rollbackers</strong> and <strong>stewards</strong>.<br>
-      <small class="text-muted">If you have these rights, try logging out and back in.</small>
-    </div>
-  {% else %}
-    <div class="card mb-4 shadow-sm">
-      <div class="card-body">
-        <div class="input-group mb-3">
-          <input id="username" type="text" class="form-control" placeholder="Enter username">
-          <button class="btn btn-primary" onclick="loadGlobalContribs()">Search</button>
-        </div>
-        <div class="form-check mt-2">
-          <input class="form-check-input" type="checkbox" id="markbotCheck">
-          <label class="form-check-label" for="markbotCheck">
-            Mark edits as bot edits
-          </label>
-        </div>
-      </div>
-    </div>
-
-    <div id="spinner" class="text-center my-4 d-none">
-      <div class="spinner-border text-primary" role="status">
-        <span class="visually-hidden">Loading...</span>
-      </div>
-    </div>
-
-    <div id="noEdits" class="alert alert-warning text-center d-none" role="alert">
-      No edits found for this user.
-    </div>
-
-    <div id="contribCard" class="card shadow-sm d-none">
-      <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
-        <span>Latest Edits</span>
-        <div>
-          <button id="rollbackAllBtn" class="btn btn-sm btn-danger me-2" onclick="confirmRollbackAll()">Rollback All</button>
-          <button id="loadMoreBtn" class="btn btn-sm btn-secondary d-none" onclick="loadMoreEdits()">Load More</button>
-        </div>
-      </div>
-      <div class="card-body p-0">
-        <div class="table-responsive">
-          <table class="table table-striped table-hover mb-0">
-            <thead class="table-dark">
-              <tr>
-                <th>Date</th>
-                <th>Project</th>
-                <th>Page title</th>
-                <th>Edit summary</th>
-                <th>Size</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody id="contribList"></tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  {% endif %}
-</main>
-
-<!-- ================== Footer ================== -->
-<footer class="bg-white text-center text-muted py-3 mt-5 shadow-sm">
-  <div class="container">
-    Made by <a href="https://meta.wikimedia.org/wiki/User:Saroj" target="_blank"><strong>Saroj</strong></a>.<br>
-    Powered by <a href="https://wikitech.wikimedia.org/wiki/Portal:Toolforge" target="_blank">Toolforge</a> · 
-    <a href="https://meta.wikimedia.org/wiki/User_talk:Saroj" target="_blank">Report an issue</a>
-  </div>
-</footer>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"></script>
-<script src="{{ url_for('static', filename='main.js') }}"></script>
+</div>
+<script type="module" src="{{ url_for('static', filename='js/main.js') }}"></script>
+<script>
+  // If Vue or Codex never load (CDN down, old browser) show a message instead of blank page
+  setTimeout(function () {
+    var el = document.getElementById('app');
+    if (el && !el.hasAttribute('data-v-app')) {
+      el.querySelector('.boot').textContent = 'The page could not be loaded. Please reload, or try another browser.';
+    }
+  }, 15000);
+</script>
 </body>
 </html>

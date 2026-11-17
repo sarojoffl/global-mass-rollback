@@ -1,68 +1,178 @@
-/* ================== Body & Layout ================== */
+/* ============================================================
+   Global Mass Rollback – layout & local styles
+   Colours, borders and typography come from Codex design tokens.
+   ============================================================ */
+
+:root { color-scheme: light; }
+:root[data-theme=dark] { color-scheme: dark; }
+*, *::before, *::after { box-sizing: border-box; }
+html, body { min-height: 100%; margin: 0; }
+
 body {
-  background: #f4f6f8;
-  font-family: "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
-  color: #212529;
+  background: var(--background-color-neutral-subtle, #f8f9fa);
+  color: var(--color-base, #202122);
+  font-family: var(--font-family-system-sans, system-ui, sans-serif);
+  font-size: var(--font-size-medium, 1rem);
+  line-height: 1.5;
 }
 
-.flex-fill { flex: 1 1 auto; }
+a { color: var(--color-progressive, #36c); text-decoration: none; }
+a:hover { text-decoration: underline; }
 
-/* ================== Login Card ================== */
+/* ── Boot/loading placeholder ───────────────────────────────────────── */
+.boot {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-subtle, #54595d);
+}
+
+/* ── App shell ──────────────────────────────────────────────────────── */
+#app { min-height: 100vh; display: flex; flex-direction: column; }
+.shell { flex: 1 0 auto; display: flex; flex-direction: column; }
+main { flex: 1 0 auto; width: 100%; max-width: 1200px; margin: 0 auto; padding: 24px 16px 48px; }
+
+/* ── Header ─────────────────────────────────────────────────────────── */
+.hdr {
+  background: var(--background-color-base, #fff);
+  border-bottom: 1px solid var(--border-color-base, #a2a9b1);
+  position: sticky; top: 0; z-index: 30;
+}
+.hdr-in {
+  max-width: 1200px; margin: 0 auto; padding: 0 16px;
+  display: flex; align-items: center; gap: 12px; min-height: 56px;
+}
+.brand {
+  display: flex; align-items: center; gap: 8px;
+  color: var(--color-base, #202122);
+  font-weight: 700; font-size: 1.125rem;
+  flex: 1;
+}
+.brand:hover { text-decoration: none; }
+.brand img { border-radius: 2px; }
+.acct { display: flex; align-items: center; gap: 8px; font-size: .875rem; }
+.acct .who { font-weight: 700; display: flex; align-items: center; gap: 5px; }
+.themesw { display: flex; align-items: center; }
+.themesw .cdx-button { min-width: 40px; min-height: 40px; padding: 0; }
+
+/* ── Login card ─────────────────────────────────────────────────────── */
 .login-card {
-  max-width: 420px;
-  margin: 100px auto;
-  padding: 35px 30px;
-  border-radius: 15px;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.12);
-  background: #ffffff;
-  transition: transform 0.2s ease-in-out;
+  max-width: 420px; margin: 80px auto; padding: 40px 32px;
+  background: var(--background-color-base, #fff);
+  border: 1px solid var(--border-color-subtle, #c8ccd1);
+  border-radius: var(--border-radius-base, 2px);
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,.08);
 }
-.login-card:hover { transform: translateY(-3px); }
+.login-logo { margin-bottom: 16px; }
+.login-title { font-size: 1.5rem; margin: 0 0 8px; }
+.login-sub { color: var(--color-subtle, #54595d); margin: 0 0 24px; }
+.login-btn { width: 100%; justify-content: center; }
 
-/* ================== Buttons ================== */
-.btn-gradient {
-  background: linear-gradient(90deg, #0d6efd, #6610f2);
-  color: #fff;
-  border: none;
-  transition: background 0.3s ease;
+/* ── Auth error ─────────────────────────────────────────────────────── */
+.auth-err { margin-top: 24px; }
+
+/* ── Panels ─────────────────────────────────────────────────────────── */
+.panel {
+  background: var(--background-color-base, #fff);
+  border: 1px solid var(--border-color-subtle, #c8ccd1);
+  border-radius: var(--border-radius-base, 2px);
+  padding: 16px;
+  margin-bottom: 16px;
 }
-.btn-gradient:hover { background: linear-gradient(90deg, #6610f2, #0d6efd); color: #fff; }
+.panel.p0 { padding: 0; }
+.panelhead {
+  display: flex; justify-content: space-between; align-items: center;
+  gap: 12px; flex-wrap: wrap;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-color-subtle, #c8ccd1);
+}
+.panelhead h2 { font-size: 1rem; margin: 0; }
+.actions-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 
-#rollbackAllBtn { transition: transform 0.2s ease; }
-#rollbackAllBtn:disabled { opacity: 0.7; }
+/* ── Search row ─────────────────────────────────────────────────────── */
+.search-row {
+  display: flex; align-items: flex-end; gap: 8px; margin-bottom: 12px; flex-wrap: wrap;
+}
+.search-field { flex: 1 1 240px; min-width: 0; }
+.search-field .cdx-text-input { width: 100%; }
 
-/* ================== Navbar ================== */
-.navbar-brand {
+/* ── Loading / empty states ─────────────────────────────────────────── */
+.loading {
+  display: flex; align-items: center; gap: 10px;
+  padding: 32px; justify-content: center;
+  color: var(--color-subtle, #54595d);
+}
+.mt { margin-top: 8px; }
+
+/* ── Table ──────────────────────────────────────────────────────────── */
+.table-wrap { overflow-x: auto; }
+.gmr-table {
+  width: 100%; border-collapse: collapse;
+  font-size: var(--font-size-small, .875rem);
+}
+.gmr-table th,
+.gmr-table td {
+  padding: 8px 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--border-color-subtle, #c8ccd1);
+  vertical-align: middle;
+}
+.gmr-table thead th {
+  background: var(--background-color-neutral, #eaecf0);
+  color: var(--color-base, #202122);
   font-weight: 700;
-  font-size: 1.45rem;
-  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+.gmr-table tbody tr:hover {
+  background: var(--background-color-neutral-subtle, #f8f9fa);
 }
 
-/* ================== Card & Table ================== */
-.card { border-radius: 12px; }
-.card-header { font-weight: 600; letter-spacing: 0.5px; }
+/* column helpers */
+.ts   { color: var(--color-subtle, #54595d); font-variant-numeric: tabular-nums; }
+.nw   { white-space: nowrap; }
+.cmt  { color: var(--color-subtle, #54595d); font-style: italic; max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-.table th, .table td { vertical-align: middle; padding: 0.75rem 0.8rem; }
-.table thead { background: #343a40; color: #fff; }
-.badge { border-radius: 0.45rem; padding: 0.35em 0.6em; font-size: 0.85rem; }
+/* size diff colouring */
+.size-add  { color: var(--color-success, #177860); font-weight: 700; font-variant-numeric: tabular-nums; }
+.size-rm   { color: var(--color-destructive, #bf3c2c); font-weight: 700; font-variant-numeric: tabular-nums; }
+.size-zero { color: var(--color-subtle, #54595d); font-variant-numeric: tabular-nums; }
 
-/* ================== Footer ================== */
-footer {
-  font-size: 0.88rem;
-  color: #6c757d;
-  background: #ffffff;
-  padding: 15px 0;
-  border-top: 1px solid #dee2e6;
-  box-shadow: 0 -3px 8px rgba(0,0,0,0.05);
+/* ── Status tags ────────────────────────────────────────────────────── */
+/* Outlined outlined tags — mirrors gs-steward-stats .gs-tag pattern */
+.gs-tag {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 1px 6px;
+  border: 1px solid var(--border-color-base, #a2a9b1);
+  color: var(--color-base, #202122);
+  font-size: var(--font-size-small, .875rem);
+  line-height: 1.5;
+  white-space: nowrap;
+  vertical-align: middle;
 }
-footer a { text-decoration: none; color: #0d6efd; font-weight: 500; transition: color 0.2s; }
-footer a:hover { color: #6610f2; }
+.gs-tag.is-success     { border-color: var(--border-color-success, #099979);    color: var(--color-success, #177860); }
+.gs-tag.is-error       { border-color: var(--border-color-error, #f54739);      color: var(--color-error, #bf3c2c); }
+.gs-tag.is-progressive { border-color: var(--border-color-progressive, #36c);  color: var(--color-progressive, #36c); }
 
-/* ================== Spinner ================== */
-#spinner .spinner-border { width: 3rem; height: 3rem; }
+/* action link buttons in table */
+.gmr-table .cdx-button { margin-right: 4px; }
 
-/* ================== Table Responsive ================== */
-.table-responsive {
-  overflow-x: auto;
-  box-shadow: inset 0 -1px 3px rgba(0,0,0,0.05);
+/* ── Footer ─────────────────────────────────────────────────────────── */
+.footer {
+  margin-top: auto;
+  border-top: 1px solid var(--border-color-subtle, #c8ccd1);
+  background: var(--background-color-base, #fff);
+  padding: 20px 16px;
+  text-align: center;
+  color: var(--color-subtle, #54595d);
+  font-size: .875rem;
+}
+.footer p { margin: 2px 0; }
+
+/* ── Responsive ─────────────────────────────────────────────────────── */
+@media (max-width: 600px) {
+  .search-row { flex-direction: column; align-items: stretch; }
+  .search-row .cdx-button { width: 100%; justify-content: center; }
+  .cmt { max-width: 180px; }
 }
