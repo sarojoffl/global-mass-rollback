@@ -3,18 +3,13 @@ import { computed, ref } from 'vue';
 import { get } from '../api.js';
 import { CdxButton, CdxField, CdxIcon, CdxLookup, CdxMultiselectLookup, CdxSelect, CdxTextInput, icons } from '../codex.js';
 
-export const blankForm = () => ({ username: '', limit: 50, wikis: [], comment: '', title: '', namespace: 'any', kind: 'any', tag: '', from: '', to: '', min_size: '', max_size: '' });
+export const blankForm = () => ({ username: '', limit: 50, wikis: [], comment: '', title: '', namespace: 'any', tag: '', from: '', to: '', min_size: '', max_size: '' });
 
 const namespaces = [
   ['any', 'Any'], ['0', '(Main)'], ['1', 'Talk'], ['2', 'User'], ['3', 'User talk'], ['4', 'Project'], ['5', 'Project talk'],
   ['6', 'File'], ['8', 'MediaWiki'], ['10', 'Template'], ['12', 'Help'], ['14', 'Category'], ['118', 'Draft'], ['828', 'Module']
 ].map(([value, label]) => ({ value, label }));
 
-const kinds = [
-  { value: 'any', label: 'Any' },
-  { value: 'existing', label: 'Existing pages' },
-  { value: 'new', label: 'New pages' }
-];
 
 const limits = [50, 100, 250, 500].map(n => ({ value: n, label: String(n) }));
 
@@ -73,7 +68,7 @@ export const SearchForm = {
     const set = (k, v) => emit('update:modelValue', { ...f.value, [k]: v });
     const reset = () => { chips.value = []; query.value = ''; emit('update:modelValue', { ...blankForm(), username: f.value.username }); };
 
-    return { f, chips, query, more, userPick, userItems, onUserInput, onUserPick, onEnter, projectItems, set, reset, namespaces, kinds, limits, icons };
+    return { f, chips, query, more, userPick, userItems, onUserInput, onUserPick, onEnter, projectItems, set, reset, namespaces, limits, icons };
   },
   template: `
 <div>
@@ -91,7 +86,6 @@ export const SearchForm = {
     <cdx-field class="extra"><template #label>Summary</template><cdx-text-input :model-value="f.comment" @update:model-value="set('comment', $event)" :disabled="disabled" clearable placeholder="Contains"/></cdx-field>
     <cdx-field class="extra"><template #label>Page title</template><cdx-text-input :model-value="f.title" @update:model-value="set('title', $event)" :disabled="disabled" clearable placeholder="Contains"/></cdx-field>
     <cdx-field class="extra"><template #label>Namespace</template><cdx-select :selected="f.namespace" @update:selected="set('namespace', $event)" :menu-items="namespaces" :disabled="disabled"/></cdx-field>
-    <cdx-field class="extra"><template #label>Edit type</template><cdx-select :selected="f.kind" @update:selected="set('kind', $event)" :menu-items="kinds" :disabled="disabled"/></cdx-field>
     <cdx-field class="extra"><template #label>From (UTC)</template><cdx-text-input input-type="date" :model-value="f.from" @update:model-value="set('from', $event)" :disabled="disabled"/></cdx-field>
     <cdx-field class="extra"><template #label>To (UTC)</template><cdx-text-input input-type="date" :model-value="f.to" @update:model-value="set('to', $event)" :disabled="disabled"/></cdx-field>
     <cdx-field class="extra"><template #label>Tag</template><cdx-text-input :model-value="f.tag" @update:model-value="set('tag', $event)" :disabled="disabled" clearable placeholder="Any"/></cdx-field>
