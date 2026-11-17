@@ -324,6 +324,7 @@ def rollback_all():
 
     edits = request.json.get("edits", [])
     mark_as_bot = request.json.get("markbot", False)
+    summary = (request.json.get("summary") or "").strip()
     results = []
 
     for edit in edits:
@@ -352,6 +353,8 @@ def rollback_all():
             }
             if mark_as_bot:
                 rollback_data["markbot"] = "1"
+            if summary:
+                rollback_data["summary"] = summary
 
             r = oauth_request(api, method="POST", data=rollback_data)
 

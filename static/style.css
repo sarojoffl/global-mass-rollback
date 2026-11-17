@@ -295,9 +295,146 @@ main {
 }
 .footer p { margin: 2px 0; }
 
+/* ── Search options (below search row) ──────────────────────── */
+.search-options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 10px;
+}
+.summary-field { margin: 0; }
+.summary-field .cdx-text-input { width: 100%; }
+
+/* ── Dialog options (inside confirm dialog) ─────────────────── */
+.dialog-options { margin-top: 12px; }
+.dialog-meta {
+  font-size: 0.875rem;
+  color: var(--color-subtle, #54595d);
+  margin: 0 0 10px;
+}
+
 /* ============================================================
    Mobile & Compact Viewport Optimizations
    ============================================================ */
+
+/* ── Tablet & Mobile (<= 768px): MediaWiki Mobile Feed Format ── */
+@media (max-width: 768px) {
+  .table-wrap {
+    overflow-x: visible;
+  }
+  .gmr-table {
+    display: block;
+    min-width: 0;
+    width: 100%;
+    border: none;
+  }
+  .gmr-table thead {
+    display: none;
+  }
+  .gmr-table tbody {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 10px;
+  }
+  .gmr-table tbody tr.gmr-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+      "wiki status"
+      "page page"
+      "comment comment"
+      "date size"
+      "actions actions";
+    gap: 6px 10px;
+    padding: 12px;
+    background: var(--background-color-base, #fff);
+    border: 1px solid var(--border-color-subtle, #c8ccd1);
+    border-radius: var(--border-radius-base, 2px);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  }
+  .gmr-table tbody tr.gmr-row:hover {
+    background: var(--background-color-base, #fff);
+  }
+  /* Clear all table cell borders so no horizontal lines appear inside mobile cards */
+  .gmr-table tbody tr.gmr-row td {
+    border: none !important;
+    padding: 0 !important;
+    background: transparent !important;
+  }
+  .col-wiki {
+    grid-area: wiki;
+    display: flex;
+    align-items: center;
+  }
+  .col-status {
+    grid-area: status;
+    justify-self: end;
+    align-self: center;
+  }
+  .col-page {
+    grid-area: page;
+    font-size: 0.95rem;
+    font-weight: 700;
+    word-break: break-word;
+    line-height: 1.4;
+  }
+  .col-comment {
+    grid-area: comment;
+    max-width: none;
+    white-space: normal;
+    word-break: break-word;
+    font-size: 0.8125rem;
+    color: var(--color-subtle, #54595d);
+    line-height: 1.4;
+  }
+  .col-comment:empty {
+    display: none;
+  }
+  .col-date {
+    grid-area: date;
+    font-size: 0.78rem;
+    color: var(--color-subtle, #54595d);
+    align-self: center;
+  }
+  .col-size {
+    grid-area: size;
+    justify-self: end;
+    font-size: 0.8125rem;
+    align-self: center;
+  }
+  .col-actions {
+    grid-area: actions;
+    display: flex;
+    gap: 8px;
+    padding-top: 8px !important;
+    margin-top: 4px;
+    border-top: 1px dashed var(--border-color-subtle, #c8ccd1) !important;
+  }
+  .col-actions .cdx-button {
+    flex: 1;
+    justify-content: center;
+    margin: 0;
+    min-height: 34px;
+  }
+
+  /* Header action buttons on mobile */
+  .panelhead {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+  .actions-row {
+    width: 100%;
+    display: flex;
+    gap: 8px;
+  }
+  .actions-row .cdx-button {
+    flex: 1;
+    justify-content: center;
+    min-height: 36px;
+  }
+}
 
 @media (max-width: 600px) {
   main {

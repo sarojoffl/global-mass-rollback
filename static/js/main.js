@@ -1,7 +1,7 @@
 import { createApp, ref, computed, onMounted } from 'vue';
 import {
   CdxButton, CdxCheckbox, CdxDialog, CdxField,
-  CdxIcon, CdxMessage, CdxProgressIndicator, CdxTextInput,
+  CdxIcon, CdxLookup, CdxMessage, CdxProgressIndicator, CdxTextInput,
   icons,
 } from './codex.js';
 
@@ -36,7 +36,7 @@ function getPageUrl(wiki, title)  { return `https://${getWikiDomain(wiki)}/wiki/
 
 // ── App ───────────────────────────────────────────────────────────────────────
 const App = {
-  components: { CdxButton, CdxCheckbox, CdxDialog, CdxField, CdxIcon, CdxMessage, CdxProgressIndicator, CdxTextInput },
+  components: { CdxButton, CdxCheckbox, CdxDialog, CdxField, CdxIcon, CdxLookup, CdxMessage, CdxProgressIndicator, CdxTextInput },
 
   setup() {
     // Read server-rendered state from data-* attributes on #app
@@ -56,9 +56,49 @@ const App = {
       try { localStorage.setItem('gmr-theme', theme.value); } catch (e) {}
     }
 
-    // Form state
-    const searchUsername  = ref('');
-    const markbot         = ref(false);
+    // Form & Autocomplete state
+    const searchUsername     = ref('');
+    const selectedLookupUser = ref(null);
+    const userMenuItems      = ref([]);
+    const lookupMenuConfig   = { visibleItemLimit: 6 };
+    const markbot            = ref(false);
+    const rollbackSummary    = ref('');
+
+    // Autocomplete lookup handler querying Meta-Wiki
+    let lookupTimer = null;
+    function onUsernameInput(val) {
+      searchUsername.value = val;
+      selectedLookupUser.value = null;
+      clearTimeout(lookupTimer);
+      const q = (val || '').trim();
+      if (q.length < 2) {
+        userMenuItems.value = [];
+        return;
+      }
+      lookupTimer = setTimeout(async () => {
+        try {
+          const url = `https://meta.wikimedia.org/w/api.php?action=query&list=globalallusers&aguprefix=${encodeURIComponent(q)}&agulimit=7&format=json&origin=*`;
+          const res = await fetch(url);
+          const data = await res.json();
+          const list = (data.query && data.query.globalallusers) || [];
+          userMenuItems.value = list.map(u => ({
+            value: u.name,
+            label: u.name,
+            description: 'Global account'
+          }));
+        } catch (e) {
+          userMenuItems.value = [];
+        }
+      }, 250);
+    }
+
+    function onUserSelected(val) {
+      if (val) {
+        searchUsername.value = val;
+        selectedLookupUser.value = val;
+        search();
+      }
+    }
 
     // Data state
     const isLoading       = ref(false);
@@ -156,7 +196,11 @@ const App = {
           const res = await fetch('/rollback_all', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ edits: [edit], markbot: markbot.value }),
+            body: JSON.stringify({
+              edits: [edit],
+              markbot: markbot.value,
+              summary: rollbackSummary.value.trim()
+            }),
           });
           const result = await res.json();
           if (result.success && result.results.length > 0) {
@@ -187,7 +231,8 @@ const App = {
     return {
       loggedIn, username, isAuthorized, logo,
       theme, toggleTheme,
-      searchUsername, markbot,
+      searchUsername, selectedLookupUser, userMenuItems, lookupMenuConfig,
+      markbot, rollbackSummary, onUsernameInput, onUserSelected,
       isLoading, edits, nextUccMap, noEdits, loadingMore,
       hasEdits, hasMore,
       rollbackStatus, isRollingBack, rollbackDone, confirmOpen,
@@ -258,20 +303,23 @@ const App = {
     <!-- Authorised view -->
     <template v-else>
 
-      <!-- Search panel -->
+      <!-- Search & Options panel -->
       <div class="panel">
         <div class="search-row">
           <cdx-field class="search-field" label="Username to roll back" hide-label>
-            <cdx-text-input
-              v-model="searchUsername"
-              placeholder="Enter username"
-              @keyup.enter="search"
+            <cdx-lookup
+              v-model:selected="selectedLookupUser"
+              v-model:input-value="searchUsername"
+              :menu-items="userMenuItems"
+              :menu-config="lookupMenuConfig"
+              :start-icon="icons.user"
+              placeholder="Enter username (auto-suggests)"
+              clearable
               :disabled="isLoading || isRollingBack"
-            >
-              <template #suffix>
-                <cdx-icon :icon="icons.user"/>
-              </template>
-            </cdx-text-input>
+              @input="onUsernameInput"
+              @update:selected="onUserSelected"
+              @keyup.enter="search"
+            />
           </cdx-field>
           <cdx-button
             weight="primary"
@@ -281,9 +329,20 @@ const App = {
             <cdx-icon :icon="icons.search"/> Search
           </cdx-button>
         </div>
-        <cdx-checkbox v-model="markbot" :disabled="isRollingBack">
-          <cdx-icon :icon="icons.robot" size="small"/> Mark edits as bot edits
-        </cdx-checkbox>
+        <div class="search-options">
+          <cdx-checkbox v-model="markbot" :disabled="isRollingBack">
+            <cdx-icon :icon="icons.robot" size="small"/> Mark edits as bot edits
+          </cdx-checkbox>
+
+          <cdx-field label="Rollback summary (optional)" class="summary-field">
+            <cdx-text-input
+              v-model="rollbackSummary"
+              placeholder="Custom summary (e.g. Cross-wiki spam [[m:SRG]])"
+              clearable
+              :disabled="isRollingBack"
+            />
+          </cdx-field>
+        </div>
       </div>
 
       <!-- Spinner -->
@@ -395,8 +454,19 @@ const App = {
     @primary="rollbackAll"
     @default="confirmOpen = false">
     <template #default>
-      Are you sure you want to roll back all <strong>{{ edits.length }}</strong> listed edits?
-      This action cannot be undone.
+      <p>Are you sure you want to roll back all <strong>{{ edits.length }}</strong> listed edits?</p>
+      <div class="dialog-options">
+        <p class="dialog-meta">
+          <strong>Bot flag:</strong> {{ markbot ? 'Marked as bot edit' : 'Standard edit (unflagged)' }}
+        </p>
+        <cdx-field label="Rollback edit summary">
+          <cdx-text-input
+            v-model="rollbackSummary"
+            placeholder="Custom summary (leave empty for MediaWiki default)"
+            clearable
+          />
+        </cdx-field>
+      </div>
     </template>
   </cdx-dialog>
 

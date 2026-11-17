@@ -9,6 +9,7 @@ export const {
   CdxField,
   CdxIcon,
   CdxInfoChip,
+  CdxLookup,
   CdxMessage,
   CdxProgressIndicator,
   CdxTextInput,
