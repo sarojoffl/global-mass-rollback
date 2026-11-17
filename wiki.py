@@ -1,7 +1,7 @@
 import re
 import threading
 import time
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import FIRST_COMPLETED, ThreadPoolExecutor, wait
 
 import requests
 
@@ -11,6 +11,8 @@ meta_api = "https://meta.wikimedia.org/w/api.php"
 allowed_groups = ("global-rollbacker", "steward", "global-sysop")
 # wikis asked at once per search, it is mostly waiting on the network
 fetch_threads = 16
+# stop asking more projects once this many edits are in
+stop_after = 200
 timeout = 15
 
 http = requests.Session()
@@ -136,7 +138,7 @@ def wiki_contribs(username, wiki, url, f, limit, cont):
 
 
 def contribs(username, f, limit, conts=None):
-    # conts: wiki -> uccontinue, for load more
+    # conts: wiki -> uccontinue for load more, "" means not asked yet
     accounts = merged_accounts(username)
     if accounts is None:
         return None
@@ -145,7 +147,11 @@ def contribs(username, f, limit, conts=None):
         accounts = [a for a in accounts if a["wiki"] in wanted]
     if conts:
         accounts = [a for a in accounts if a["wiki"] in conts]
+    # busiest projects first, they're most likely to have the newest edits
+    accounts.sort(key=lambda a: -a.get("editcount", 0))
 
+    # stop asking new projects once we have this many edits, load more does the rest
+    enough = max(stop_after, limit)
     results, errors = {}, []
 
     def work(a):
@@ -155,8 +161,16 @@ def contribs(username, f, limit, conts=None):
             errors.append(a["wiki"])
             print(f"contribs failed on {a['wiki']}:", e)
 
+    todo = list(accounts)
     with ThreadPoolExecutor(max_workers=fetch_threads) as pool:
-        list(pool.map(work, accounts))
+        running = set()
+        while todo or running:
+            found = sum(len(r[0]) for r in results.values())
+            while todo and len(running) < fetch_threads and found < enough:
+                running.add(pool.submit(work, todo.pop(0)))
+            if not running:
+                break
+            done, running = wait(running, return_when=FIRST_COMPLETED)
 
     everything = [e for r in results.values() for e in r[0]]
     everything.sort(key=lambda e: e["timestamp"], reverse=True)
@@ -164,7 +178,7 @@ def contribs(username, f, limit, conts=None):
 
     # next time start at the first fetched edit we didn't show ("timestamp|revid")
     shown_ids = {(e["wiki"], e["revid"]) for e in shown}
-    next_conts = {}
+    next_conts = {a["wiki"]: "" for a in todo}
     for wiki, (picked, cont, extra) in results.items():
         left = [e for e in picked + extra if (wiki, e["revid"]) not in shown_ids]
         if left:
@@ -174,7 +188,7 @@ def contribs(username, f, limit, conts=None):
             next_conts[wiki] = cont
 
     return {"edits": shown, "next": next_conts, "failed_wikis": sorted(errors),
-            "accounts": len(accounts) if not conts else None}
+            "checked": len(accounts) - len(todo), "projects": len(accounts), "unchecked": len(todo)}
 
 
 # rollback, signed with the user's oauth token
