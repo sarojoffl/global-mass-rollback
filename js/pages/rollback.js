@@ -169,6 +169,7 @@ export const RollbackPage = {
       </div>
 
       <div class="rbbar">
+        <cdx-text-input v-model="summary" class="mob-only rbsum" :disabled="running" clearable placeholder="Rollback summary (optional)" aria-label="Rollback summary"/>
         <div class="grp">
           <cdx-checkbox v-model="markbot" :disabled="running" inline>Mark as bot edits</cdx-checkbox>
           <cdx-text-input v-model="summary" class="desk-only summary" :disabled="running" clearable placeholder="Rollback summary (optional)" aria-label="Rollback summary"/>
