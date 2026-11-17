@@ -214,7 +214,6 @@ def clean_filters(raw):
         "title": str(raw.get("title") or "").strip()[:200],
         "tag": str(raw.get("tag") or "").strip()[:100],
         "namespace": str(ns) if ns not in (None, "") and re.fullmatch(r"-?\d+", str(ns)) else None,
-        "kind": raw.get("kind") if raw.get("kind") in ("new", "existing") else None,
         "from": date(raw.get("from")),
         "to": date(raw.get("to")),
         "min_size": num(raw.get("min_size")),
