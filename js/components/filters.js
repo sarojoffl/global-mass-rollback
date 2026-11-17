@@ -3,7 +3,7 @@ import { computed, ref } from 'vue';
 import { get } from '../api.js';
 import { CdxButton, CdxField, CdxIcon, CdxLookup, CdxMultiselectLookup, CdxSelect, CdxTextInput, icons } from '../codex.js';
 
-export const blankForm = () => ({ username: '', limit: 50, wikis: [], comment: '', title: '', namespace: 'any', tag: '', from: '', to: '', min_size: '', max_size: '' });
+export const blankForm = () => ({ username: '', limit: 50, wikis: [], comment: '', title: '', namespace: 'any', tag: '', from: '', to: '' });
 
 const namespaces = [
   ['any', 'Any'], ['0', '(Main)'], ['1', 'Talk'], ['2', 'User'], ['3', 'User talk'], ['4', 'Project'], ['5', 'Project talk'],
@@ -90,8 +90,6 @@ export const SearchForm = {
     <cdx-field class="extra"><template #label>To (UTC)</template><cdx-text-input input-type="date" :model-value="f.to" @update:model-value="set('to', $event)" :disabled="disabled"/></cdx-field>
     <cdx-field class="extra"><template #label>Tag</template><cdx-text-input :model-value="f.tag" @update:model-value="set('tag', $event)" :disabled="disabled" clearable placeholder="Any"/></cdx-field>
     <cdx-field class="extra"><template #label>Edits</template><cdx-select :selected="f.limit" @update:selected="set('limit', $event)" :menu-items="limits" :disabled="disabled"/></cdx-field>
-    <cdx-field class="extra"><template #label>Min size change</template><cdx-text-input input-type="number" :model-value="f.min_size" @update:model-value="set('min_size', $event)" :disabled="disabled" placeholder="Bytes"/></cdx-field>
-    <cdx-field class="extra"><template #label>Max size change</template><cdx-text-input input-type="number" :model-value="f.max_size" @update:model-value="set('max_size', $event)" :disabled="disabled" placeholder="Bytes"/></cdx-field>
   </div>
   <div class="toolbar">
     <cdx-button weight="primary" action="progressive" :disabled="disabled || !f.username.trim()" @click="$emit('search')"><cdx-icon :icon="icons.search"/> {{ busy ? 'Searching…' : 'Search' }}</cdx-button>
