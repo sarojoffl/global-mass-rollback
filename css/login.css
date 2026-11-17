@@ -1,0 +1,26 @@
+/* login screen, from gs-steward-stats */
+:root { color-scheme: light; }
+:root[data-theme=dark] { color-scheme: dark; }
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body { margin: 0; background: var(--background-color-base, #fff); color: var(--color-base, #202122); font-family: var(--font-family-system-sans, system-ui, sans-serif); font-size: var(--font-size-medium, 1rem); line-height: 1.5; }
+a { color: var(--color-progressive, #36c); text-decoration: none; }
+a:hover { text-decoration: underline; }
+#app, .shell { min-height: 100%; display: flex; flex-direction: column; }
+.hdr { background: var(--background-color-base, #fff); border-bottom: 1px solid var(--border-color-base, #a2a9b1); }
+.hdr-in { max-width: 1200px; margin: 0 auto; padding: 0 16px; display: flex; align-items: center; gap: 20px; min-height: 56px; }
+.brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 1.125rem; }
+.brand img { width: 32px; height: 32px; }
+.themesw { margin-left: auto; }
+.themesw .cdx-button { min-width: 40px; min-height: 40px; padding: 0; }
+main { flex: 1; display: flex; align-items: center; justify-content: center; padding: 48px 16px; background: var(--background-color-neutral-subtle, #f8f9fa); }
+.hero { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 16px; width: 100%; max-width: 640px; }
+.hero img { width: 120px; height: 120px; }
+.hero h1 { margin: 0; font-size: 2.25rem; line-height: 1.2; }
+.hero p { margin: 0; color: var(--color-subtle, #54595d); font-size: 1.125rem; }
+.hero .cdx-button { margin-top: 8px; min-width: 260px; }
+.hero .cdx-message { text-align: left; }
+.footer { margin-top: auto; border-top: 1px solid var(--border-color-subtle, #c8ccd1); background: var(--background-color-base, #fff); padding: 24px 16px calc(24px + env(safe-area-inset-bottom, 0px)); text-align: center; color: var(--color-subtle, #54595d); font-size: .875rem; line-height: 1.6; }
+.footer p { margin: 0; }
+.mono { font-family: var(--font-family-monospace, monospace); font-size: .8125rem; }
+@media (max-width: 600px) { .hero h1 { font-size: 1.75rem; } .hero img { width: 88px; height: 88px; } .hero .cdx-button { width: 100%; min-width: 0; } }
